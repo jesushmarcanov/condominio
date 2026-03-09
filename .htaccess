@@ -1,0 +1,22 @@
+# Activar el motor de reescritura de URL
+RewriteEngine On
+
+# Redirigir todas las solicitudes que no son archivos o directorios a index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [QSA,L]
+
+# Configuración de seguridad
+<Files "config*">
+    Require all denied
+</Files>
+
+<Files "*.log">
+    Require all denied
+</Files>
+
+# Prevenir listado de directorios
+Options -Indexes
+
+# Página de error personalizada
+ErrorDocument 404 /index.php
