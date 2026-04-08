@@ -32,8 +32,11 @@
                                 <button type="submit" class="btn btn-primary">
                                     <i class="fas fa-search"></i> Filtrar
                                 </button>
-                                <a href="<?= APP_URL ?>/reports/residents?export=csv" class="btn btn-success">
-                                    <i class="fas fa-file-csv"></i> Exportar CSV
+                                <a href="<?= APP_URL ?>/excel/residents?status=<?= $status ?>" class="btn btn-success">
+                                    <i class="fas fa-file-excel"></i> Exportar Excel
+                                </a>
+                                <a href="<?= APP_URL ?>/pdf/residents?status=<?= $status ?>" class="btn btn-danger" target="_blank">
+                                    <i class="fas fa-file-pdf"></i> Descargar PDF
                                 </a>
                             </div>
                         </div>

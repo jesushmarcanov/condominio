@@ -175,9 +175,9 @@
                         <i class="fas fa-trash"></i> Eliminar Incidencia
                     </button>
                     
-                    <button type="button" class="btn btn-outline-info" onclick="printIncident()">
-                        <i class="fas fa-print"></i> Imprimir Reporte
-                    </button>
+                    <a href="<?= APP_URL ?>/pdf/incident-receipt/<?= $incident['id'] ?>" class="btn btn-outline-danger" target="_blank">
+                        <i class="fas fa-file-pdf"></i> Descargar PDF
+                    </a>
                     <?php endif; ?>
                     
                     <a href="<?= APP_URL ?>/residents/show/<?= $incident['residente_id'] ?>" class="btn btn-outline-secondary">
@@ -317,10 +317,6 @@ function confirmDelete() {
     if(confirm('¿Está seguro de que desea eliminar esta incidencia? Esta acción no se puede deshacer.')) {
         window.location.href = '<?= APP_URL ?>/incidents/delete/<?= $incident['id'] ?>';
     }
-}
-
-function printIncident() {
-    window.print();
 }
 </script>
 

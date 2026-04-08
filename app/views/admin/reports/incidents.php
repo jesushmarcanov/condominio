@@ -44,9 +44,13 @@
                                 <button type="submit" class="btn btn-primary">
                                     <i class="fas fa-search"></i> Filtrar
                                 </button>
-                                <a href="<?= APP_URL ?>/reports/incidents?start_date=<?= $start_date ?>&end_date=<?= $end_date ?>&export=csv" 
+                                <a href="<?= APP_URL ?>/excel/incidents?start_date=<?= $start_date ?>&end_date=<?= $end_date ?>&status=<?= $status ?>" 
                                    class="btn btn-success">
-                                    <i class="fas fa-file-csv"></i> Exportar CSV
+                                    <i class="fas fa-file-excel"></i> Exportar Excel
+                                </a>
+                                <a href="<?= APP_URL ?>/pdf/incidents?start_date=<?= $start_date ?>&end_date=<?= $end_date ?>&status=<?= $status ?>" 
+                                   class="btn btn-danger" target="_blank">
+                                    <i class="fas fa-file-pdf"></i> Descargar PDF
                                 </a>
                             </div>
                         </div>

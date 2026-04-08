@@ -56,9 +56,22 @@
                        class="btn btn-success">
                         <i class="fas fa-file-csv"></i> Exportar CSV
                     </a>
-                    <button class="btn btn-primary" onclick="window.print()">
-                        <i class="fas fa-print"></i> Imprimir Reporte
-                    </button>
+                    <?php
+                    // Determinar el endpoint PDF según el tipo de reporte
+                    $pdf_url = '';
+                    if($report_type === 'income') {
+                        $pdf_url = APP_URL . "/pdf/income?start_date={$start_date}&end_date={$end_date}";
+                    } elseif($report_type === 'incidents') {
+                        $pdf_url = APP_URL . "/pdf/incidents?start_date={$start_date}&end_date={$end_date}";
+                    } elseif($report_type === 'payments') {
+                        $pdf_url = APP_URL . "/pdf/pending-payments";
+                    }
+                    ?>
+                    <?php if($pdf_url): ?>
+                        <a href="<?= $pdf_url ?>" class="btn btn-danger" target="_blank">
+                            <i class="fas fa-file-pdf"></i> Descargar PDF
+                        </a>
+                    <?php endif; ?>
                     <a href="<?= APP_URL ?>/reports/custom" class="btn btn-secondary">
                         <i class="fas fa-arrow-left"></i> Nuevo Reporte
                     </a>

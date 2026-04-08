@@ -42,12 +42,12 @@
         <div class="card">
             <div class="card-body">
                 <div class="d-flex gap-2">
-                    <a href="<?= APP_URL ?>/reports/pendingPayments?export=csv" class="btn btn-success">
-                        <i class="fas fa-file-csv"></i> Exportar CSV
+                    <a href="<?= APP_URL ?>/excel/pending-payments" class="btn btn-success">
+                        <i class="fas fa-file-excel"></i> Exportar Excel
                     </a>
-                    <button class="btn btn-primary" onclick="window.print()">
-                        <i class="fas fa-print"></i> Imprimir
-                    </button>
+                    <a href="<?= APP_URL ?>/pdf/pending-payments" class="btn btn-danger" target="_blank">
+                        <i class="fas fa-file-pdf"></i> Descargar PDF
+                    </a>
                     <a href="<?= APP_URL ?>/reports" class="btn btn-secondary">
                         <i class="fas fa-arrow-left"></i> Volver a Reportes
                     </a>
@@ -98,8 +98,8 @@
                                         <td>
                                             <strong><?= htmlspecialchars($payment['residente_nombre']) ?></strong>
                                         </td>
-                                        <td><?= htmlspecialchars($payment['email']) ?></td>
-                                        <td><?= htmlspecialchars($payment['telefono']) ?></td>
+                                        <td><?= htmlspecialchars($payment['residente_email'] ?? '') ?></td>
+                                        <td><?= htmlspecialchars($payment['telefono'] ?? '') ?></td>
                                         <td><?= htmlspecialchars($payment['apartamento']) ?></td>
                                         <td class="fw-bold text-warning"><?= formatCurrency($payment['monto']) ?></td>
                                         <td>
@@ -121,7 +121,7 @@
                                                    class="btn btn-sm btn-outline-primary" title="Ver detalles">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
-                                                <a href="mailto:<?= htmlspecialchars($payment['email']) ?>?subject=Recordatorio de Pago - Condominio" 
+                                                <a href="mailto:<?= htmlspecialchars($payment['residente_email'] ?? '') ?>?subject=Recordatorio de Pago - Condominio" 
                                                    class="btn btn-sm btn-outline-info" title="Enviar recordatorio">
                                                     <i class="fas fa-envelope"></i>
                                                 </a>

@@ -101,9 +101,11 @@ class UserController extends Controller {
             if($resident_data) {
                 $payment = new Payment($this->db);
                 $incident = new Incident($this->db);
+                $notification = new Notification($this->db);
                 
                 $stats['mis_pagos'] = $payment->readByResident($resident_data['id'])->fetchAll(PDO::FETCH_ASSOC);
                 $stats['mis_incidencias'] = $incident->readByResident($resident_data['id'])->fetchAll(PDO::FETCH_ASSOC);
+                $stats['mis_notificaciones'] = $notification->readByUser($current_user['id'])->fetchAll(PDO::FETCH_ASSOC);
                 $stats['residente_info'] = $resident_data;
             }
             

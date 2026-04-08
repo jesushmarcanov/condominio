@@ -1,5 +1,20 @@
 <?php
-// Modelo de Pagos
+/**
+ * Modelo de Pagos
+ * 
+ * Gestiona las operaciones CRUD de pagos en la base de datos.
+ * Los pagos representan las cuotas de mantenimiento y otros conceptos
+ * que los residentes deben pagar al condominio.
+ * 
+ * Estados de pago:
+ * - pendiente: Pago registrado pero no realizado
+ * - atrasado: Pago pendiente cuya fecha de vencimiento ha pasado
+ * - pagado: Pago completado
+ * 
+ * @package App\Models
+ * @author Sistema de Gestión de Condominio
+ * @version 1.0.0
+ */
 
 class Payment {
     private $conn;
@@ -17,11 +32,23 @@ class Payment {
     public $created_at;
     public $updated_at;
 
+    /**
+     * Constructor
+     * 
+     * @param PDO $db Conexión a la base de datos
+     */
     public function __construct($db) {
         $this->conn = $db;
     }
 
-    // Crear pago
+    /**
+     * Crear un nuevo pago
+     * 
+     * Inserta un nuevo registro de pago en la base de datos.
+     * Los datos deben estar previamente asignados a las propiedades públicas.
+     * 
+     * @return bool True si se creó exitosamente, false en caso contrario
+     */
     public function create() {
         $query = "INSERT INTO " . $this->table_name . " (residente_id, monto, concepto, mes_pago, fecha_pago, metodo_pago, referencia, estado) VALUES (:residente_id, :monto, :concepto, :mes_pago, :fecha_pago, :metodo_pago, :referencia, :estado)";
         
@@ -55,7 +82,13 @@ class Payment {
         return false;
     }
 
-    // Leer todos los pagos con información de residentes
+    /**
+     * Leer todos los pagos con información de residentes
+     * 
+     * Obtiene todos los pagos con datos relacionados de residentes y usuarios.
+     * 
+     * @return PDOStatement Resultado de la consulta
+     */
     public function readAll() {
         $query = "SELECT p.*, r.apartamento, u.nombre, u.email 
                   FROM " . $this->table_name . " p
@@ -69,7 +102,12 @@ class Payment {
         return $stmt;
     }
 
-    // Leer pagos por residente
+    /**
+     * Leer pagos de un residente específico
+     * 
+     * @param int $residente_id ID del residente
+     * @return PDOStatement Resultado de la consulta
+     */
     public function readByResident($residente_id) {
         $query = "SELECT p.*, r.apartamento, u.nombre, u.email 
                   FROM " . $this->table_name . " p
@@ -85,7 +123,14 @@ class Payment {
         return $stmt;
     }
 
-    // Leer un pago por ID
+    /**
+     * Leer un pago específico por ID
+     * 
+     * Obtiene los datos completos de un pago incluyendo información del residente.
+     * El ID debe estar previamente asignado a la propiedad $this->id.
+     * 
+     * @return array|false Datos del pago o false si no existe
+     */
     public function readOne() {
         $query = "SELECT p.*, r.apartamento, u.nombre, u.email 
                   FROM " . $this->table_name . " p
@@ -100,7 +145,14 @@ class Payment {
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    // Actualizar pago
+    /**
+     * Actualizar un pago existente
+     * 
+     * Actualiza todos los campos del pago especificado.
+     * Los datos deben estar previamente asignados a las propiedades públicas.
+     * 
+     * @return bool True si se actualizó exitosamente, false en caso contrario
+     */
     public function update() {
         $query = "UPDATE " . $this->table_name . " SET residente_id = :residente_id, monto = :monto, concepto = :concepto, mes_pago = :mes_pago, fecha_pago = :fecha_pago, metodo_pago = :metodo_pago, referencia = :referencia, estado = :estado WHERE id = :id";
         
@@ -134,7 +186,14 @@ class Payment {
         return false;
     }
 
-    // Eliminar pago
+    /**
+     * Eliminar un pago
+     * 
+     * Elimina el pago especificado de la base de datos.
+     * El ID debe estar previamente asignado a la propiedad $this->id.
+     * 
+     * @return bool True si se eliminó exitosamente, false en caso contrario
+     */
     public function delete() {
         $query = "DELETE FROM " . $this->table_name . " WHERE id = :id";
         
@@ -148,7 +207,14 @@ class Payment {
         return false;
     }
 
-    // Obtener pagos pendientes
+    /**
+     * Obtener pagos pendientes o atrasados
+     * 
+     * Obtiene todos los pagos con estado 'pendiente' o 'atrasado'.
+     * Utilizado por el sistema de notificaciones para detectar pagos vencidos.
+     * 
+     * @return PDOStatement Resultado de la consulta
+     */
     public function getPendingPayments() {
         $query = "SELECT p.*, r.apartamento, u.nombre, u.email 
                   FROM " . $this->table_name . " p
@@ -163,7 +229,12 @@ class Payment {
         return $stmt;
     }
 
-    // Obtener pagos por mes
+    /**
+     * Obtener pagos de un mes específico
+     * 
+     * @param string $month Mes en formato YYYY-MM
+     * @return PDOStatement Resultado de la consulta
+     */
     public function getPaymentsByMonth($month) {
         $query = "SELECT p.*, r.apartamento, u.nombre, u.email 
                   FROM " . $this->table_name . " p
@@ -179,7 +250,13 @@ class Payment {
         return $stmt;
     }
 
-    // Obtener estadísticas de pagos
+    /**
+     * Obtener estadísticas de pagos
+     * 
+     * Calcula estadísticas generales: total de pagos, ingresos, pagos por estado, etc.
+     * 
+     * @return array Estadísticas de pagos
+     */
     public function getStats() {
         $query = "SELECT 
                     COUNT(*) as total_pagos,
@@ -199,7 +276,14 @@ class Payment {
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    // Obtener ingresos mensuales
+    /**
+     * Obtener ingresos mensuales
+     * 
+     * Calcula los ingresos totales por mes para los últimos N meses.
+     * 
+     * @param int $months Número de meses a consultar (default: 12)
+     * @return array Ingresos mensuales agrupados por mes
+     */
     public function getMonthlyIncome($months = 12) {
         $query = "SELECT 
                     DATE_FORMAT(fecha_pago, '%Y-%m') as mes,
@@ -218,7 +302,13 @@ class Payment {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // Verificar si ya existe pago para el mismo mes y residente
+    /**
+     * Verificar si ya existe un pago para el mismo mes y residente
+     * 
+     * Previene la creación de pagos duplicados para el mismo residente y mes.
+     * 
+     * @return bool True si existe un pago duplicado, false si no existe
+     */
     public function paymentExists() {
         $query = "SELECT id FROM " . $this->table_name . " 
                   WHERE residente_id = :residente_id AND mes_pago = :mes_pago AND id != :id";

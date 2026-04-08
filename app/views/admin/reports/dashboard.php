@@ -247,9 +247,6 @@
                     <a href="<?= APP_URL ?>/reports/custom" class="btn btn-info">
                         <i class="fas fa-cog"></i> Reporte Personalizado
                     </a>
-                    <button class="btn btn-secondary" onclick="window.print()">
-                        <i class="fas fa-print"></i> Imprimir Dashboard
-                    </button>
                 </div>
             </div>
         </div>

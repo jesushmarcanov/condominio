@@ -124,9 +124,9 @@
                         <i class="fas fa-trash"></i> Eliminar Pago
                     </button>
                     
-                    <button type="button" class="btn btn-outline-info" onclick="printPayment()">
-                        <i class="fas fa-print"></i> Imprimir Comprobante
-                    </button>
+                    <a href="<?= APP_URL ?>/pdf/payment-receipt/<?= $payment['id'] ?>" class="btn btn-outline-danger" target="_blank">
+                        <i class="fas fa-file-pdf"></i> Descargar PDF
+                    </a>
                     <?php endif; ?>
                     
                     <a href="<?= APP_URL ?>/residents/show/<?= $payment['residente_id'] ?>" class="btn btn-outline-secondary">
@@ -233,10 +233,6 @@ function confirmDelete() {
     if(confirm('¿Está seguro de que desea eliminar este pago? Esta acción no se puede deshacer.')) {
         window.location.href = '<?= APP_URL ?>/payments/delete/<?= $payment['id'] ?>';
     }
-}
-
-function printPayment() {
-    window.print();
 }
 </script>
 

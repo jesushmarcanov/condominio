@@ -74,6 +74,53 @@
     </div>
 </div>
 
+<!-- Notificaciones Recientes -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-bell"></i> Notificaciones Recientes</h5>
+            </div>
+            <div class="card-body">
+                <?php if(!empty($stats['mis_notificaciones'])): ?>
+                    <div class="list-group">
+                        <?php foreach(array_slice($stats['mis_notificaciones'], 0, 3) as $notif): ?>
+                        <div class="list-group-item <?= !$notif['leida'] ? 'list-group-item-light border-start border-3 border-primary' : '' ?>">
+                            <div class="d-flex w-100 justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">
+                                        <?php if(!$notif['leida']): ?>
+                                            <span class="badge bg-primary me-1">Nueva</span>
+                                        <?php endif; ?>
+                                        <?= htmlspecialchars($notif['titulo']) ?>
+                                    </h6>
+                                    <p class="mb-1 small"><?= htmlspecialchars(substr($notif['mensaje'], 0, 100)) ?>...</p>
+                                    <small class="text-muted">
+                                        <i class="fas fa-clock"></i> <?= formatDate($notif['created_at']) ?>
+                                    </small>
+                                </div>
+                                <span class="badge bg-<?= 
+                                    $notif['tipo'] == 'warning' ? 'warning' : 
+                                    ($notif['tipo'] == 'error' ? 'danger' : 
+                                    ($notif['tipo'] == 'success' ? 'success' : 'info'))
+                                ?>">
+                                    <?= ucfirst($notif['tipo']) ?>
+                                </span>
+                            </div>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <div class="text-center mt-3">
+                        <a href="<?= APP_URL ?>/notifications" class="btn btn-sm btn-outline-primary">Ver todas las notificaciones</a>
+                    </div>
+                <?php else: ?>
+                    <p class="text-muted mb-0">No tienes notificaciones</p>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row">
     <!-- Mis Pagos Recientes -->
     <div class="col-md-6">

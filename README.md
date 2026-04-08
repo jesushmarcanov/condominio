@@ -14,7 +14,9 @@ Una aplicación web completa para la gestión integral de condominios, desarroll
 - Registro de cuotas de mantenimiento
 - Visualización de pagos por residente
 - Reportes de pagos pendientes
-- Notificaciones de pagos vencidos
+- **Notificaciones automáticas de pagos vencidos**
+- **Detección automática de pagos atrasados**
+- **Sistema de alertas persistentes**
 
 ### 🚨 Gestión de Incidencias
 - Registro de problemas (agua, electricidad, etc.)
@@ -196,13 +198,42 @@ Para reportes de problemas o solicitudes de características:
 ## Roadmap Futuro
 
 - [ ] Sistema de reservas de áreas comunes
-- [ ] Notificaciones por SMS
+- [ ] Notificaciones por email y SMS
 - [ ] Aplicación móvil
 - [ ] Integración con pasarelas de pago
 - [ ] Sistema de encuestas
 - [ ] Chat interno
 - [ ] Backup automático
 - [ ] Multi-condominio
+
+## Módulo de Notificaciones de Pagos Vencidos
+
+El sistema incluye un módulo completo de notificaciones automáticas para pagos vencidos:
+
+- **Detección Automática**: Identifica pagos pendientes o atrasados cuya fecha de pago ha vencido
+- **Notificaciones Persistentes**: Crea registros en la base de datos que los residentes pueden consultar
+- **Prevención de Duplicados**: Evita generar múltiples notificaciones para el mismo pago
+- **Actualización de Estados**: Cambia automáticamente el estado de pagos pendientes a atrasados
+- **Ejecución Programada**: Script ejecutable mediante cron jobs para detección diaria
+
+### Configuración
+
+Para configurar el sistema de notificaciones automáticas, consulte el archivo [README_NOTIFICATIONS.md](README_NOTIFICATIONS.md) que incluye:
+
+- Instrucciones detalladas de configuración del cron job
+- Ejemplos de configuración para diferentes frecuencias
+- Guía de monitoreo y logs
+- Solución de problemas comunes
+- Integración con el sistema existente
+
+### Componentes
+
+- **Notification Model**: Gestiona operaciones CRUD de notificaciones
+- **NotificationService**: Lógica de negocio para detección y generación
+- **NotificationController**: Interfaces de usuario para residentes y administradores
+- **Script de Cron**: `check_overdue_payments.php` - Ejecutable para detección programada
+
+
 
 ## Changelog
 

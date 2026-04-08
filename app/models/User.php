@@ -80,7 +80,7 @@ class User {
 
     // Leer un usuario por ID
     public function readOne() {
-        $query = "SELECT id, nombre, email, rol, telefono, created_at FROM " . $this->table_name . " WHERE id = :id LIMIT 1";
+        $query = "SELECT id, nombre, email, rol, telefono, created_at, updated_at FROM " . $this->table_name . " WHERE id = :id LIMIT 1";
         
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":id", $this->id);
@@ -94,6 +94,7 @@ class User {
             $this->rol = $row['rol'];
             $this->telefono = $row['telefono'];
             $this->created_at = $row['created_at'];
+            $this->updated_at = $row['updated_at'];
             return true;
         }
         

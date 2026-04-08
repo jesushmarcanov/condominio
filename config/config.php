@@ -41,6 +41,9 @@ function sanitize($data) {
 }
 
 function formatDate($date) {
+    if ($date === null || $date === '') {
+        return '';
+    }
     return date('d/m/Y H:i', strtotime($date));
 }
 

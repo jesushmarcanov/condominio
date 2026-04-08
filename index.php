@@ -21,6 +21,12 @@ require_once APP_PATH . '/models/Resident.php';
 require_once APP_PATH . '/models/Payment.php';
 require_once APP_PATH . '/models/Incident.php';
 require_once APP_PATH . '/models/Report.php';
+require_once APP_PATH . '/models/Notification.php';
+
+// Cargar servicios
+require_once APP_PATH . '/services/NotificationService.php';
+require_once APP_PATH . '/services/PdfService.php';
+require_once APP_PATH . '/services/ExcelService.php';
 
 // Cargar controladores
 require_once APP_PATH . '/controllers/Controller.php';
@@ -29,6 +35,9 @@ require_once APP_PATH . '/controllers/ResidentController.php';
 require_once APP_PATH . '/controllers/PaymentController.php';
 require_once APP_PATH . '/controllers/IncidentController.php';
 require_once APP_PATH . '/controllers/ReportController.php';
+require_once APP_PATH . '/controllers/NotificationController.php';
+require_once APP_PATH . '/controllers/PdfController.php';
+require_once APP_PATH . '/controllers/ExcelController.php';
 
 // Obtener la ruta solicitada
 $request = $_SERVER['REQUEST_URI'];
@@ -72,6 +81,30 @@ switch ($request_path) {
     case '/profile':
         $controller = new UserController();
         $controller->profile();
+        break;
+        
+    case '/users':
+        $controller = new UserController();
+        if ($method === 'GET') {
+            $controller->index();
+        } elseif ($method === 'POST') {
+            $controller->create();
+        }
+        break;
+        
+    case '/users/create':
+        $controller = new UserController();
+        $controller->create();
+        break;
+        
+    case (preg_match('/^\/users\/edit\/(\d+)$/', $request_path, $matches) ? true : false):
+        $controller = new UserController();
+        $controller->edit($matches[1]);
+        break;
+        
+    case (preg_match('/^\/users\/delete\/(\d+)$/', $request_path, $matches) ? true : false):
+        $controller = new UserController();
+        $controller->delete($matches[1]);
         break;
         
     case '/residents':
@@ -228,6 +261,81 @@ switch ($request_path) {
     case '/reports/chartData':
         $controller = new ReportController();
         $controller->chartData();
+        break;
+        
+    case '/notifications':
+        $controller = new NotificationController();
+        $controller->index();
+        break;
+        
+    case (preg_match('/^\/notifications\/markAsRead\/(\d+)$/', $request_path, $matches) ? true : false):
+        $controller = new NotificationController();
+        $controller->markAsRead($matches[1]);
+        break;
+        
+    case '/notifications/getUnreadCount':
+        $controller = new NotificationController();
+        $controller->getUnreadCount();
+        break;
+        
+    case '/notifications/admin':
+        $controller = new NotificationController();
+        $controller->admin();
+        break;
+        
+    case '/notifications/stats':
+        $controller = new NotificationController();
+        $controller->stats();
+        break;
+        
+    case '/pdf/income':
+        $controller = new PdfController();
+        $controller->income();
+        break;
+        
+    case '/pdf/pending-payments':
+        $controller = new PdfController();
+        $controller->pendingPayments();
+        break;
+        
+    case '/pdf/incidents':
+        $controller = new PdfController();
+        $controller->incidents();
+        break;
+        
+    case '/pdf/residents':
+        $controller = new PdfController();
+        $controller->residents();
+        break;
+        
+    case '/excel/income':
+        $controller = new ExcelController();
+        $controller->income();
+        break;
+        
+    case '/excel/pending-payments':
+        $controller = new ExcelController();
+        $controller->pendingPayments();
+        break;
+        
+    case '/excel/incidents':
+        $controller = new ExcelController();
+        $controller->incidents();
+        break;
+        
+    case '/excel/residents':
+        $controller = new ExcelController();
+        $controller->residents();
+        break;
+        
+    case (preg_match('/^\/pdf\/payment-receipt\/(\d+)$/', $request_path, $matches) ? true : false):
+        $controller = new PdfController();
+        $controller->paymentReceipt($matches[1]);
+        break;
+        
+    case (preg_match('/^\/pdf\/incident-receipt\/(\d+)$/', $request_path, $matches) ? true : false):
+        $controller = new PdfController();
+        $controller->incidentReceipt($matches[1]);
         break;
         
     default:
