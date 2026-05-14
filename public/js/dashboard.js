@@ -8,6 +8,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Inicializar gráfico de incidencias por categoría
     initIncidentChart();
     
+    // Inicializar gráfico de incidencias mensuales
+    initMonthlyIncidentsChart();
+    
+    // Inicializar gráfico de métodos de pago
+    initPaymentMethodsChart();
+    
     // Actualizar estadísticas en tiempo real
     updateStats();
     
@@ -17,111 +23,204 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Gráfico de ingresos mensuales
 function initIncomeChart() {
-    var ctx = document.getElementById('incomeChart');
+    var ctx = document.getElementById('monthlyIncomeChart');
     if (!ctx) return;
     
-    // Obtener datos del servidor
-    fetch(APP_URL + '/reports/chartData?type=monthly_income')
-        .then(response => response.json())
-        .then(data => {
-            var chart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: data.map(item => {
-                        var date = new Date(item.mes + '-01');
-                        return date.toLocaleDateString('es-MX', { month: 'short', year: 'numeric' });
-                    }),
-                    datasets: [{
-                        label: 'Ingresos Mensuales',
-                        data: data.map(item => item.ingresos),
-                        borderColor: '#007bff',
-                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: true,
-                            position: 'top'
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return 'Ingresos: $' + context.parsed.y.toLocaleString('es-MX');
-                                }
+    // Usar datos pasados desde el servidor
+    if (typeof monthlyIncomeData !== 'undefined' && monthlyIncomeData.length > 0) {
+        var chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: monthlyIncomeData.map(item => {
+                    var date = new Date(item.period + '-01');
+                    return date.toLocaleDateString('es-MX', { month: 'short', year: 'numeric' });
+                }),
+                datasets: [{
+                    label: 'Ingresos Mensuales',
+                    data: monthlyIncomeData.map(item => parseFloat(item.amount)),
+                    borderColor: '#007bff',
+                    backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'Ingresos: $' + context.parsed.y.toLocaleString('es-MX');
                             }
                         }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return '$' + value.toLocaleString('es-MX');
-                                }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toLocaleString('es-MX');
                             }
                         }
                     }
                 }
-            });
-        })
-        .catch(error => console.error('Error al cargar datos del gráfico:', error));
+            }
+        });
+    }
 }
 
 // Gráfico de incidencias por categoría
 function initIncidentChart() {
-    var ctx = document.getElementById('incidentChart');
+    var ctx = document.getElementById('incidentsCategoryChart');
     if (!ctx) return;
     
-    fetch(APP_URL + '/reports/chartData?type=incidents_by_category')
-        .then(response => response.json())
-        .then(data => {
-            var chart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: data.map(item => item.categoria),
-                    datasets: [{
-                        data: data.map(item => item.cantidad),
-                        backgroundColor: [
-                            '#FF6384',
-                            '#36A2EB',
-                            '#FFCE56',
-                            '#4BC0C0',
-                            '#9966FF',
-                            '#FF9F40',
-                            '#FF6384'
-                        ],
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    var label = context.label || '';
-                                    var value = context.parsed;
-                                    var total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                    var percentage = ((value / total) * 100).toFixed(1);
-                                    return label + ': ' + value + ' (' + percentage + '%)';
-                                }
+    // Usar datos pasados desde el servidor
+    if (typeof incidentsCategoryData !== 'undefined' && incidentsCategoryData.length > 0) {
+        var chart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: incidentsCategoryData.map(item => item.category.charAt(0).toUpperCase() + item.category.slice(1)),
+                datasets: [{
+                    data: incidentsCategoryData.map(item => parseInt(item.count)),
+                    backgroundColor: [
+                        '#FF6384',
+                        '#36A2EB',
+                        '#FFCE56',
+                        '#4BC0C0',
+                        '#9966FF',
+                        '#FF9F40',
+                        '#FF6384'
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                var label = context.label || '';
+                                var value = context.parsed;
+                                var total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                var percentage = ((value / total) * 100).toFixed(1);
+                                return label + ': ' + value + ' (' + percentage + '%)';
                             }
                         }
                     }
                 }
-            });
-        })
-        .catch(error => console.error('Error al cargar datos del gráfico:', error));
+            }
+        });
+    }
+}
+
+// Gráfico de incidencias mensuales
+function initMonthlyIncidentsChart() {
+    var ctx = document.getElementById('monthlyIncidentsChart');
+    if (!ctx) return;
+    
+    // Usar datos pasados desde el servidor
+    if (typeof monthlyIncidentsData !== 'undefined' && monthlyIncidentsData.length > 0) {
+        var chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: monthlyIncidentsData.map(item => {
+                    var date = new Date(item.period + '-01');
+                    return date.toLocaleDateString('es-MX', { month: 'short', year: 'numeric' });
+                }),
+                datasets: [{
+                    label: 'Incidencias Mensuales',
+                    data: monthlyIncidentsData.map(item => parseInt(item.count)),
+                    backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    }
+}
+
+// Gráfico de métodos de pago
+function initPaymentMethodsChart() {
+    var ctx = document.getElementById('paymentMethodsChart');
+    if (!ctx) return;
+    
+    // Usar datos pasados desde el servidor
+    if (typeof paymentMethodsData !== 'undefined' && paymentMethodsData.length > 0) {
+        var chart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: paymentMethodsData.map(item => {
+                    var methods = {
+                        'efectivo': 'Efectivo',
+                        'transferencia': 'Transferencia',
+                        'tarjeta': 'Tarjeta',
+                        'deposito': 'Depósito'
+                    };
+                    return methods[item.method] || item.method;
+                }),
+                datasets: [{
+                    data: paymentMethodsData.map(item => parseInt(item.count)),
+                    backgroundColor: [
+                        '#28a745',
+                        '#17a2b8',
+                        '#ffc107',
+                        '#6f42c1'
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                var label = context.label || '';
+                                var value = context.parsed;
+                                var total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                var percentage = ((value / total) * 100).toFixed(1);
+                                return label + ': ' + value + ' pagos (' + percentage + '%)';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
 }
 
 // Actualizar estadísticas

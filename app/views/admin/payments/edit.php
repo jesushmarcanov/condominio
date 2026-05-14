@@ -188,6 +188,104 @@
                 </form>
             </div>
         </div>
+
+        <!-- Sección de Ajuste de Mora -->
+        <?php if (isset($payment['monto_mora']) && $payment['monto_mora'] > 0): ?>
+        <div class="card mt-3">
+            <div class="card-header bg-warning text-dark">
+                <h5><i class="fas fa-percentage"></i> Ajuste Manual de Mora</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <strong>Mora Actual:</strong> $<?= number_format($payment['monto_mora'], 2) ?><br>
+                    <strong>Fecha de Aplicación:</strong> <?= isset($payment['fecha_aplicacion_mora']) ? date('d/m/Y', strtotime($payment['fecha_aplicacion_mora'])) : 'N/A' ?>
+                </div>
+
+                <form method="POST" action="<?= APP_URL ?>/payments/<?= $payment['id'] ?>/adjust-late-fee">
+                    <div class="mb-3">
+                        <label for="monto_mora" class="form-label">Nuevo Monto de Mora *</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" 
+                                   class="form-control" 
+                                   id="monto_mora" 
+                                   name="monto_mora" 
+                                   value="<?= htmlspecialchars($payment['monto_mora'] ?? '0.00') ?>" 
+                                   step="0.01" 
+                                   min="0" 
+                                   required>
+                        </div>
+                        <small class="form-text text-muted">Ingrese 0 para eliminar la mora</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="justificacion" class="form-label">Justificación del Ajuste *</label>
+                        <textarea class="form-control" 
+                                  id="justificacion" 
+                                  name="justificacion" 
+                                  rows="3" 
+                                  minlength="10"
+                                  maxlength="500"
+                                  required
+                                  placeholder="Explique el motivo del ajuste de mora (mínimo 10 caracteres)"></textarea>
+                        <small class="form-text text-muted">Este ajuste quedará registrado en el historial</small>
+                    </div>
+
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-edit"></i> Ajustar Mora
+                    </button>
+                </form>
+
+                <!-- Historial de Mora -->
+                <?php if (isset($late_fee_history) && !empty($late_fee_history)): ?>
+                <hr>
+                <h6><i class="fas fa-history"></i> Historial de Mora</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Tipo</th>
+                                <th>Calculado</th>
+                                <th>Aplicado</th>
+                                <th>Días Atraso</th>
+                                <th>Usuario</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($late_fee_history as $history): ?>
+                                <tr>
+                                    <td><?= date('d/m/Y H:i', strtotime($history['created_at'])) ?></td>
+                                    <td>
+                                        <?php
+                                        $tipo_badges = [
+                                            'calculo_automatico' => '<span class="badge bg-info">Automático</span>',
+                                            'ajuste_manual' => '<span class="badge bg-warning">Ajuste Manual</span>',
+                                            'eliminacion' => '<span class="badge bg-danger">Eliminación</span>'
+                                        ];
+                                        echo $tipo_badges[$history['tipo_operacion']] ?? $history['tipo_operacion'];
+                                        ?>
+                                    </td>
+                                    <td>$<?= number_format($history['monto_calculado'], 2) ?></td>
+                                    <td>$<?= number_format($history['monto_aplicado'], 2) ?></td>
+                                    <td><?= $history['dias_atraso'] ?> días</td>
+                                    <td><?= htmlspecialchars($history['usuario_nombre'] ?? 'Sistema') ?></td>
+                                </tr>
+                                <?php if ($history['justificacion']): ?>
+                                    <tr>
+                                        <td colspan="6" class="text-muted small">
+                                            <em>Justificación: <?= htmlspecialchars($history['justificacion']) ?></em>
+                                        </td>
+                                    </tr>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php endif; ?>
     </div>
     
     <div class="col-md-4">

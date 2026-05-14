@@ -1,0 +1,86 @@
+[2026-04-16 04:31:27] TO: test@example.com | SUBJECT: Email de Prueba - ResiTech
+--------------------------------------------------------------------------------
+<h1>Prueba de Email</h1><p>Este es un email de prueba del sistema ResiTech.</p><p>Fecha: 2026-04-16 04:31:27</p>
+
+[2026-04-16 18:06:04] TO: residente@example.com | SUBJECT: Pago Vencido - Cuota de Mantenimiento
+--------------------------------------------------------------------------------
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f4f4f4; }
+        .container { max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .header { background-color: #2c3e50; color: #ffffff; padding: 30px 20px; text-align: center; }
+        .header h1 { margin: 0; font-size: 24px; }
+        .content { padding: 30px 20px; }
+        .info-box { background-color: #ecf0f1; padding: 15px; border-radius: 4px; margin: 15px 0; }
+        .info-row { margin: 10px 0; }
+        .label { font-weight: bold; color: #2c3e50; }
+        .value { color: #555; }
+        .alert { background-color: #e74c3c; color: white; padding: 15px; border-radius: 4px; margin: 15px 0; }
+        .success { background-color: #27ae60; color: white; padding: 15px; border-radius: 4px; margin: 15px 0; }
+        .warning { background-color: #f39c12; color: white; padding: 15px; border-radius: 4px; margin: 15px 0; }
+        .footer { background-color: #ecf0f1; padding: 20px; text-align: center; font-size: 12px; color: #7f8c8d; }
+        @media only screen and (max-width: 600px) {
+            .container { margin: 0; border-radius: 0; }
+            .content { padding: 20px 15px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>ResiTech</h1>
+            <p>Sistema de Gestión de Condominio</p>
+        </div>
+        <div class="content">
+                            <div class="alert">
+                    <h2 style="margin: 0 0 10px 0;">⚠️ Pago Vencido</h2>
+                    <p style="margin: 0;">Tiene un pago pendiente que ha vencido.</p>
+                </div>
+                        
+            <p>Estimado/a <strong>Juan Pérez</strong>,</p>
+            
+                            <p>Le recordamos que tiene un pago pendiente que ha vencido. Por favor, regularice su situación a la brevedad.</p>
+                        
+            <div class="info-box">
+                <h3 style="margin-top: 0; color: #2c3e50;">Detalles del Pago</h3>
+                <div class="info-row">
+                    <span class="label">Apartamento:</span>
+                    <span class="value">101 - Torre A</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Concepto:</span>
+                    <span class="value">Cuota de Mantenimiento</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Monto:</span>
+                    <span class="value">$1,500.00</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Mes de Pago:</span>
+                    <span class="value">2026-03</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Fecha de Vencimiento:</span>
+                    <span class="value">15/03/2026</span>
+                </div>
+                                <div class="info-row">
+                    <span class="label">Referencia:</span>
+                    <span class="value">PAG-2026-03-001</span>
+                </div>
+                                            </div>
+            
+            <p>Si tiene alguna pregunta o necesita asistencia, por favor contacte a la administración.</p>
+        </div>
+        <div class="footer">
+            <p>&copy; 2026 ResiTech. Todos los derechos reservados.</p>
+            <p>Este es un correo automático, por favor no responder.</p>
+        </div>
+    </div>
+</body>
+</html>
+
+

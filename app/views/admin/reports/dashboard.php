@@ -151,7 +151,10 @@
             <div class="card-body text-center">
                 <div class="progress mb-3" style="height: 25px;">
                     <?php 
-                    $ocupacion = ($stats['residentes_activos'] / $stats['total_apartamentos']) * 100;
+                    // Evitar división por cero
+                    $ocupacion = $stats['total_apartamentos'] > 0 
+                        ? ($stats['residentes_activos'] / $stats['total_apartamentos']) * 100 
+                        : 0;
                     ?>
                     <div class="progress-bar bg-primary" role="progressbar" 
                          style="width: <?= $ocupacion ?>%">

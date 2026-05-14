@@ -60,7 +60,7 @@ Una aplicación web completa para la gestión integral de condominios, desarroll
 - PHP 7.4 o superior
 - MySQL 5.7 o MariaDB 10.2+
 - Servidor web (Apache o Nginx)
-- Composer (opcional)
+- Composer para gestión de dependencias
 
 ### Pasos de Instalación
 
@@ -70,14 +70,21 @@ Una aplicación web completa para la gestión integral de condominios, desarroll
    cd condominio
    ```
 
-2. **Configurar la base de datos**
+2. **Instalar dependencias**
+   ```bash
+   composer install
+   ```
+
+3. **Configurar la base de datos**
    ```sql
    CREATE DATABASE condominio_db;
    -- Importar el archivo database/condominio_db.sql
    mysql -u root -p condominio_db < database/condominio_db.sql
+   -- Importar la tabla de logs de email
+   mysql -u root -p condominio_db < database/email_logs.sql
    ```
 
-3. **Configurar la conexión**
+4. **Configurar la conexión**
    Editar el archivo `config/database.php`:
    ```php
    private $host = 'localhost';
@@ -86,14 +93,36 @@ Una aplicación web completa para la gestión integral de condominios, desarroll
    private $password = 'tu_contraseña';
    ```
 
-4. **Configurar el servidor web**
+5. **Configurar el servicio de correo electrónico**
+   Copiar el archivo `.env.example` a `.env` y configurar las credenciales:
+   ```bash
+   cp .env.example .env
+   ```
+   
+   Editar `.env` con tus credenciales de correo:
+   ```env
+   # Para Gmail
+   MAIL_DRIVER=smtp
+   MAIL_HOST=smtp.gmail.com
+   MAIL_PORT=587
+   MAIL_USERNAME=tu-email@gmail.com
+   MAIL_PASSWORD=tu-app-password
+   MAIL_FROM_ADDRESS=noreply@condoweb.com
+   MAIL_FROM_NAME=CondoWeb
+   MAIL_TEST_MODE=false
+   ```
+   
+   **Nota para Gmail**: Si usas Gmail con autenticación de dos factores, necesitas generar una "Contraseña de aplicación" en https://myaccount.google.com/apppasswords
+
+6. **Configurar el servidor web**
    - Asegurarse que el document root apunte a la carpeta `public/`
    - Configurar URL amigables (mod_rewrite en Apache)
 
-5. **Permisos de archivos**
+7. **Permisos de archivos**
    ```bash
    chmod -R 755 .
    chmod -R 777 logs/
+   chmod 600 .env
    ```
 
 ### Usuario por Defecto
@@ -136,7 +165,15 @@ condominio/
 - Categorización de problemas
 - Prioridades (alta, media, baja)
 - Seguimiento completo
-- Notificaciones por email
+- Notificaciones por email a residentes y administradores
+
+### Notificaciones por Email
+- **Pagos Vencidos**: Notificación automática cuando un pago vence
+- **Confirmación de Pago**: Email de confirmación al registrar un pago
+- **Incidencias**: Notificaciones sobre creación, actualización y resolución
+- **Administradores**: Alertas urgentes para incidencias de alta prioridad
+- **Modo de Prueba**: Opción para registrar emails en archivos sin enviarlos
+- **Registro de Logs**: Seguimiento completo de todos los emails enviados
 
 ### Reportes
 - Reportes financieros
@@ -198,13 +235,97 @@ Para reportes de problemas o solicitudes de características:
 ## Roadmap Futuro
 
 - [ ] Sistema de reservas de áreas comunes
-- [ ] Notificaciones por email y SMS
+- [x] Notificaciones por email (implementado)
+- [ ] Notificaciones por SMS
 - [ ] Aplicación móvil
 - [ ] Integración con pasarelas de pago
 - [ ] Sistema de encuestas
 - [ ] Chat interno
 - [ ] Backup automático
 - [ ] Multi-condominio
+
+## Configuración de Email
+
+El sistema incluye un módulo completo de notificaciones por correo electrónico que envía alertas automáticas a residentes y administradores.
+
+### Proveedores Soportados
+
+- **SMTP**: Gmail, Outlook, servidores SMTP personalizados
+- **SendGrid**: API de SendGrid (opcional)
+
+### Configuración con Gmail
+
+1. Habilitar autenticación de dos factores en tu cuenta de Gmail
+2. Generar una contraseña de aplicación en https://myaccount.google.com/apppasswords
+3. Configurar el archivo `.env`:
+
+```env
+MAIL_DRIVER=smtp
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=tu-email@gmail.com
+MAIL_PASSWORD=tu-contraseña-de-aplicacion
+MAIL_FROM_ADDRESS=noreply@condoweb.com
+MAIL_FROM_NAME=CondoWeb
+MAIL_TEST_MODE=false
+```
+
+### Configuración con SendGrid
+
+1. Crear una cuenta en SendGrid
+2. Generar una API Key
+3. Configurar el archivo `.env`:
+
+```env
+MAIL_DRIVER=sendgrid
+SENDGRID_API_KEY=tu-api-key-de-sendgrid
+MAIL_FROM_ADDRESS=noreply@condoweb.com
+MAIL_FROM_NAME=CondoWeb
+MAIL_TEST_MODE=false
+```
+
+### Modo de Prueba
+
+Para probar el sistema sin enviar emails reales, activa el modo de prueba:
+
+```env
+MAIL_TEST_MODE=true
+```
+
+Los emails se registrarán en `logs/emails/email_YYYY-MM-DD.log` en lugar de enviarse.
+
+### Tipos de Notificaciones
+
+- **Pago Vencido**: Se envía automáticamente cuando un pago vence
+- **Confirmación de Pago**: Se envía al registrar un nuevo pago
+- **Recordatorio de Pago**: Se puede configurar para enviar 3 días antes del vencimiento
+- **Incidencia Creada**: Notifica al residente cuando reporta una incidencia
+- **Incidencia Actualizada**: Notifica cambios de estado
+- **Incidencia Resuelta**: Confirma la resolución de la incidencia
+- **Alerta a Administradores**: Notifica a todos los administradores sobre nuevas incidencias
+
+### Monitoreo de Emails
+
+Consulta los logs de email en la base de datos:
+
+```sql
+SELECT * FROM email_logs 
+WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+ORDER BY created_at DESC;
+```
+
+### Solución de Problemas
+
+**Email no se envía:**
+- Verifica las credenciales en el archivo `.env`
+- Revisa los logs en `logs/emails/` o la tabla `email_logs`
+- Asegúrate de que el puerto SMTP no esté bloqueado por el firewall
+- Para Gmail, verifica que uses una contraseña de aplicación
+
+**Emails van a spam:**
+- Configura registros SPF, DKIM y DMARC en tu dominio
+- Usa un dominio verificado como remitente
+- Considera usar SendGrid para mejor entregabilidad
 
 ## Módulo de Notificaciones de Pagos Vencidos
 

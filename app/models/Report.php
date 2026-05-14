@@ -210,43 +210,44 @@ class Report {
         switch($type) {
             case 'monthly_income':
                 $query = "SELECT 
-                            DATE_FORMAT(fecha_pago, '%Y-%m') as mes,
-                            COALESCE(SUM(monto), 0) as ingresos
+                            DATE_FORMAT(fecha_pago, '%Y-%m') as period,
+                            COALESCE(SUM(monto), 0) as amount,
+                            COUNT(*) as count
                           FROM pagos 
                           WHERE estado = 'pagado' 
                           AND fecha_pago >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
                           GROUP BY DATE_FORMAT(fecha_pago, '%Y-%m')
-                          ORDER BY mes ASC";
+                          ORDER BY period ASC";
                 break;
                 
             case 'monthly_incidents':
                 $query = "SELECT 
-                            DATE_FORMAT(fecha_reporte, '%Y-%m') as mes,
-                            COUNT(*) as cantidad
+                            DATE_FORMAT(fecha_reporte, '%Y-%m') as period,
+                            COUNT(*) as count
                           FROM incidencias 
                           WHERE fecha_reporte >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
                           GROUP BY DATE_FORMAT(fecha_reporte, '%Y-%m')
-                          ORDER BY mes ASC";
+                          ORDER BY period ASC";
                 break;
                 
             case 'incidents_by_category':
                 $query = "SELECT 
-                            categoria,
-                            COUNT(*) as cantidad
+                            categoria as category,
+                            COUNT(*) as count
                           FROM incidencias 
                           GROUP BY categoria 
-                          ORDER BY cantidad DESC";
+                          ORDER BY count DESC";
                 break;
                 
             case 'payment_methods':
                 $query = "SELECT 
-                            metodo_pago,
-                            COUNT(*) as cantidad,
+                            metodo_pago as method,
+                            COUNT(*) as count,
                             COALESCE(SUM(monto), 0) as total
                           FROM pagos 
                           WHERE estado = 'pagado'
                           GROUP BY metodo_pago 
-                          ORDER BY cantidad DESC";
+                          ORDER BY count DESC";
                 break;
                 
             default:
@@ -256,7 +257,24 @@ class Report {
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
         
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Asegurar que siempre haya datos, incluso si están vacíos
+        if (empty($results)) {
+            // Retornar estructura vacía según el tipo
+            switch($type) {
+                case 'monthly_income':
+                    return [['period' => date('Y-m'), 'amount' => 0, 'count' => 0]];
+                case 'monthly_incidents':
+                    return [['period' => date('Y-m'), 'count' => 0]];
+                case 'incidents_by_category':
+                    return [['category' => 'Sin datos', 'count' => 0]];
+                case 'payment_methods':
+                    return [['method' => 'Sin datos', 'count' => 0, 'total' => 0]];
+            }
+        }
+        
+        return $results;
     }
 
     // Exportar reporte a CSV

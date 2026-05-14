@@ -7,9 +7,22 @@ define('APP_PATH', ROOT_PATH . '/app');
 define('CONFIG_PATH', ROOT_PATH . '/config');
 define('PUBLIC_PATH', ROOT_PATH . '/public');
 
+// Cargar autoloader de Composer
+require_once ROOT_PATH . '/vendor/autoload.php';
+
+// Cargar variables de entorno
+try {
+    $dotenv = Dotenv\Dotenv::createImmutable(ROOT_PATH);
+    $dotenv->load();
+} catch (Exception $e) {
+    // Si no existe .env, continuar sin variables de entorno
+    error_log("[Bootstrap] .env file not found or invalid: " . $e->getMessage());
+}
+
 // Cargar configuración
 require_once CONFIG_PATH . '/database.php';
 require_once CONFIG_PATH . '/config.php';
+require_once CONFIG_PATH . '/catalogs.php';
 
 // Iniciar sesión
 session_start();
@@ -22,11 +35,26 @@ require_once APP_PATH . '/models/Payment.php';
 require_once APP_PATH . '/models/Incident.php';
 require_once APP_PATH . '/models/Report.php';
 require_once APP_PATH . '/models/Notification.php';
+require_once APP_PATH . '/models/IncidentEvent.php';
+
+// Cargar modelos de mora si existen
+if (file_exists(APP_PATH . '/models/LateFeeRule.php')) {
+    require_once APP_PATH . '/models/LateFeeRule.php';
+}
+if (file_exists(APP_PATH . '/models/LateFeeHistory.php')) {
+    require_once APP_PATH . '/models/LateFeeHistory.php';
+}
 
 // Cargar servicios
+require_once APP_PATH . '/services/EmailService.php';
 require_once APP_PATH . '/services/NotificationService.php';
 require_once APP_PATH . '/services/PdfService.php';
 require_once APP_PATH . '/services/ExcelService.php';
+
+// Cargar servicio de mora si existe
+if (file_exists(APP_PATH . '/services/LateFeeService.php')) {
+    require_once APP_PATH . '/services/LateFeeService.php';
+}
 
 // Cargar controladores
 require_once APP_PATH . '/controllers/Controller.php';
@@ -38,6 +66,11 @@ require_once APP_PATH . '/controllers/ReportController.php';
 require_once APP_PATH . '/controllers/NotificationController.php';
 require_once APP_PATH . '/controllers/PdfController.php';
 require_once APP_PATH . '/controllers/ExcelController.php';
+
+// Cargar controlador de mora si existe
+if (file_exists(APP_PATH . '/controllers/LateFeeController.php')) {
+    require_once APP_PATH . '/controllers/LateFeeController.php';
+}
 
 // Obtener la ruta solicitada
 $request = $_SERVER['REQUEST_URI'];
@@ -131,6 +164,27 @@ switch ($request_path) {
         $controller->edit($matches[1]);
         break;
         
+    case (preg_match('/^\/residents\/delete\/(\d+)$/', $request_path, $matches) ? true : false):
+        $controller = new ResidentController();
+        $controller->delete($matches[1]);
+        break;
+        
+    case '/residents/getActiveResidents':
+        if ($method !== 'GET') {
+            http_response_code(405);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Método no permitido. Use GET']);
+            break;
+        }
+        $controller = new ResidentController();
+        $controller->getActiveResidents();
+        break;
+        
+    case '/residents/myProfile':
+        $controller = new ResidentController();
+        $controller->myProfile();
+        break;
+        
     case '/payments':
         $controller = new PaymentController();
         if ($method === 'GET') {
@@ -207,6 +261,16 @@ switch ($request_path) {
     case (preg_match('/^\/incidents\/delete\/(\d+)$/', $request_path, $matches) ? true : false):
         $controller = new IncidentController();
         $controller->delete($matches[1]);
+        break;
+        
+    case (preg_match('/^\/incidents\/changeStatus\/(\d+)$/', $request_path, $matches) ? true : false):
+        if ($method !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['error' => 'Método no permitido. Use POST']);
+            break;
+        }
+        $controller = new IncidentController();
+        $controller->changeStatus($matches[1]);
         break;
         
     case '/incidents/report':
@@ -336,6 +400,92 @@ switch ($request_path) {
     case (preg_match('/^\/pdf\/incident-receipt\/(\d+)$/', $request_path, $matches) ? true : false):
         $controller = new PdfController();
         $controller->incidentReceipt($matches[1]);
+        break;
+        
+    // Late Fee Rules Management (Admin only)
+    case '/late-fee-rules':
+        if (class_exists('LateFeeController')) {
+            $controller = new LateFeeController();
+            $controller->index();
+        } else {
+            http_response_code(404);
+            include APP_PATH . '/views/404.php';
+        }
+        break;
+        
+    case '/late-fee-rules/create':
+        if (class_exists('LateFeeController')) {
+            $controller = new LateFeeController();
+            $controller->create();
+        } else {
+            http_response_code(404);
+            include APP_PATH . '/views/404.php';
+        }
+        break;
+        
+    case (preg_match('/^\/late-fee-rules\/edit\/(\d+)$/', $request_path, $matches) ? true : false):
+        if (class_exists('LateFeeController')) {
+            $controller = new LateFeeController();
+            $controller->edit($matches[1]);
+        } else {
+            http_response_code(404);
+            include APP_PATH . '/views/404.php';
+        }
+        break;
+        
+    case (preg_match('/^\/late-fee-rules\/delete\/(\d+)$/', $request_path, $matches) ? true : false):
+        if (class_exists('LateFeeController')) {
+            $controller = new LateFeeController();
+            $controller->delete($matches[1]);
+        } else {
+            http_response_code(404);
+            include APP_PATH . '/views/404.php';
+        }
+        break;
+        
+    case (preg_match('/^\/late-fee-rules\/toggle\/(\d+)$/', $request_path, $matches) ? true : false):
+        if (class_exists('LateFeeController')) {
+            $controller = new LateFeeController();
+            $controller->toggle($matches[1]);
+        } else {
+            http_response_code(404);
+            include APP_PATH . '/views/404.php';
+        }
+        break;
+        
+    case '/late-fee-rules/simulate':
+        if (class_exists('LateFeeController')) {
+            $controller = new LateFeeController();
+            $controller->simulate();
+        } else {
+            http_response_code(404);
+            include APP_PATH . '/views/404.php';
+        }
+        break;
+        
+    case (preg_match('/^\/payments\/(\d+)\/adjust-late-fee$/', $request_path, $matches) ? true : false):
+        $controller = new PaymentController();
+        $controller->adjustLateFee($matches[1]);
+        break;
+        
+    case '/late-fees/report':
+        if (class_exists('LateFeeController')) {
+            $controller = new LateFeeController();
+            $controller->report();
+        } else {
+            http_response_code(404);
+            include APP_PATH . '/views/404.php';
+        }
+        break;
+        
+    case '/late-fees/stats':
+        if (class_exists('LateFeeController')) {
+            $controller = new LateFeeController();
+            $controller->stats();
+        } else {
+            http_response_code(404);
+            include APP_PATH . '/views/404.php';
+        }
         break;
         
     default:

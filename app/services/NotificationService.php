@@ -24,6 +24,7 @@ class NotificationService {
     private $payment;
     private $resident;
     private $notification;
+    private $emailService;
     
     /**
      * Constructor
@@ -38,6 +39,7 @@ class NotificationService {
         $this->payment = new Payment($db);
         $this->resident = new Resident($db);
         $this->notification = new Notification($db);
+        $this->emailService = new EmailService($db);
     }
     
     /**
@@ -176,6 +178,10 @@ class NotificationService {
             }
             
             error_log("[NotificationService] Notificación creada para usuario ID: " . $resident_data['usuario_id'] . ", Pago ID: " . $payment_data['id']);
+            
+            // Send email notification
+            $this->sendPaymentEmail($payment_data, $resident_data, 'overdue');
+            
             return true;
             
         } catch (Exception $e) {
@@ -265,6 +271,68 @@ class NotificationService {
         $mensaje .= "Por favor, regularice su situación a la brevedad.";
         
         return $mensaje;
+    }
+    
+    /**
+     * Send payment email notification
+     * 
+     * @param array $payment_data Payment data
+     * @param array $resident_data Resident data
+     * @param string $type Email type (overdue, confirmation, reminder)
+     * @return void
+     */
+    private function sendPaymentEmail($payment_data, $resident_data, $type) {
+        if (!$this->emailService->isEnabled()) {
+            error_log("[NotificationService] Email service disabled, skipping email");
+            return;
+        }
+        
+        try {
+            $recipient = $resident_data['email'];
+            
+            if (empty($recipient)) {
+                error_log("[NotificationService] No email address for resident ID: " . $resident_data['id']);
+                return;
+            }
+            
+            // Prepare template variables
+            $variables = [
+                'resident_name' => $resident_data['nombre'],
+                'apartment' => $resident_data['apartamento'],
+                'tower' => $resident_data['torre'],
+                'payment_concept' => $payment_data['concepto'],
+                'payment_amount' => number_format($payment_data['monto'], 2),
+                'payment_month' => $payment_data['mes_pago'],
+                'due_date' => date('d/m/Y', strtotime($payment_data['fecha_pago'])),
+                'reference' => $payment_data['referencia'] ?? 'N/A',
+                'type' => $type
+            ];
+            
+            // Load and render template
+            $html_body = $this->emailService->loadTemplate('payment_notification', $variables);
+            
+            // Determine subject based on type
+            $subjects = [
+                'overdue' => 'Pago Vencido - ' . $payment_data['concepto'],
+                'confirmation' => 'Confirmación de Pago - ' . $payment_data['concepto'],
+                'reminder' => 'Recordatorio de Pago - ' . $payment_data['concepto']
+            ];
+            
+            $subject = $subjects[$type] ?? 'Notificación de Pago';
+            
+            // Send email (non-blocking - errors are logged but don't stop execution)
+            $result = $this->emailService->sendHtmlEmail($recipient, $subject, $html_body);
+            
+            if ($result['success']) {
+                error_log("[NotificationService] Email sent to: $recipient");
+            } else {
+                error_log("[NotificationService] Email failed: " . $result['error']);
+            }
+            
+        } catch (Exception $e) {
+            error_log("[NotificationService] Email exception: " . $e->getMessage());
+            // Don't throw - email failures should not break notification creation
+        }
     }
 }
 ?>

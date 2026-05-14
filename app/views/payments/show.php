@@ -71,6 +71,115 @@
                 <?php endif; ?>
             </div>
         </div>
+
+        <!-- Desglose de Mora -->
+        <?php if (isset($payment['monto_mora']) && $payment['monto_mora'] > 0): ?>
+        <div class="card mt-3">
+            <div class="card-header bg-warning text-dark">
+                <h5><i class="fas fa-percentage"></i> Desglose de Mora</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    <strong>Este pago tiene recargos por mora aplicados</strong>
+                </div>
+
+                <table class="table table-bordered">
+                    <tr>
+                        <td><strong>Monto Original:</strong></td>
+                        <td class="text-end">$<?= number_format($payment['monto_original'] ?? $payment['monto'], 2) ?></td>
+                    </tr>
+                    <tr class="table-warning">
+                        <td><strong>Recargo por Mora:</strong></td>
+                        <td class="text-end text-danger">+$<?= number_format($payment['monto_mora'], 2) ?></td>
+                    </tr>
+                    <tr class="table-success">
+                        <td><strong>Monto Total a Pagar:</strong></td>
+                        <td class="text-end"><strong>$<?= number_format(($payment['monto_original'] ?? $payment['monto']) + $payment['monto_mora'], 2) ?></strong></td>
+                    </tr>
+                </table>
+
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <p><strong>Fecha de Vencimiento:</strong> <?= formatDate($payment['fecha_pago']) ?></p>
+                        <?php
+                        $fecha_vencimiento = new DateTime($payment['fecha_pago']);
+                        $fecha_actual = new DateTime();
+                        $dias_atraso = $fecha_actual->diff($fecha_vencimiento)->days;
+                        if ($fecha_actual > $fecha_vencimiento) {
+                            echo "<p><strong>Días de Atraso:</strong> <span class='text-danger'>{$dias_atraso} días</span></p>";
+                        }
+                        ?>
+                    </div>
+                    <div class="col-md-6">
+                        <?php if (isset($payment['fecha_aplicacion_mora'])): ?>
+                            <p><strong>Fecha de Aplicación de Mora:</strong> <?= formatDate($payment['fecha_aplicacion_mora']) ?></p>
+                        <?php endif; ?>
+                        <?php if (isset($payment['regla_mora_nombre'])): ?>
+                            <p><strong>Regla Aplicada:</strong> <span class="badge bg-info"><?= htmlspecialchars($payment['regla_mora_nombre']) ?></span></p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <div class="alert alert-info mt-3">
+                    <h6><i class="fas fa-info-circle"></i> Explicación del Recargo</h6>
+                    <p class="mb-0">
+                        El recargo por mora se aplicó debido a que el pago excedió la fecha de vencimiento. 
+                        Este monto se calcula automáticamente según las reglas de mora configuradas por la administración.
+                        <?php if ($payment['estado'] != 'pagado'): ?>
+                        <br><strong>Importante:</strong> El monto de mora puede incrementar si el pago continúa atrasado.
+                        <?php endif; ?>
+                    </p>
+                </div>
+
+                <!-- Historial de Mora -->
+                <?php if (isset($late_fee_history) && !empty($late_fee_history)): ?>
+                <hr>
+                <h6><i class="fas fa-history"></i> Historial de Mora</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Tipo</th>
+                                <th>Calculado</th>
+                                <th>Aplicado</th>
+                                <th>Días</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($late_fee_history as $history): ?>
+                                <tr>
+                                    <td><?= date('d/m/Y H:i', strtotime($history['created_at'])) ?></td>
+                                    <td>
+                                        <?php
+                                        $tipo_badges = [
+                                            'calculo_automatico' => '<span class="badge bg-info">Automático</span>',
+                                            'ajuste_manual' => '<span class="badge bg-warning">Ajuste</span>',
+                                            'eliminacion' => '<span class="badge bg-danger">Eliminación</span>'
+                                        ];
+                                        echo $tipo_badges[$history['tipo_operacion']] ?? $history['tipo_operacion'];
+                                        ?>
+                                    </td>
+                                    <td>$<?= number_format($history['monto_calculado'], 2) ?></td>
+                                    <td>$<?= number_format($history['monto_aplicado'], 2) ?></td>
+                                    <td><?= $history['dias_atraso'] ?></td>
+                                </tr>
+                                <?php if ($history['justificacion']): ?>
+                                    <tr>
+                                        <td colspan="5" class="text-muted small">
+                                            <em><?= htmlspecialchars($history['justificacion']) ?></em>
+                                        </td>
+                                    </tr>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php endif; ?>
     </div>
     
     <div class="col-md-4">

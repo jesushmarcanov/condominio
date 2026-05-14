@@ -31,6 +31,12 @@ class Payment {
     public $estado;
     public $created_at;
     public $updated_at;
+    
+    // Late fee properties
+    public $monto_original;
+    public $monto_mora;
+    public $fecha_aplicacion_mora;
+    public $regla_mora_id;
 
     /**
      * Constructor
@@ -85,12 +91,14 @@ class Payment {
     /**
      * Leer todos los pagos con información de residentes
      * 
-     * Obtiene todos los pagos con datos relacionados de residentes y usuarios.
+     * Obtiene todos los pagos con datos relacionados de residentes, usuarios
+     * y campos de mora (monto_original, monto_mora, fecha_aplicacion_mora, regla_mora_id).
      * 
      * @return PDOStatement Resultado de la consulta
      */
     public function readAll() {
-        $query = "SELECT p.*, r.apartamento, u.nombre, u.email 
+        $query = "SELECT p.*, r.apartamento, u.nombre, u.email,
+                  p.monto_original, p.monto_mora, p.fecha_aplicacion_mora, p.regla_mora_id
                   FROM " . $this->table_name . " p
                   LEFT JOIN residentes r ON p.residente_id = r.id
                   LEFT JOIN usuarios u ON r.usuario_id = u.id
@@ -126,13 +134,15 @@ class Payment {
     /**
      * Leer un pago específico por ID
      * 
-     * Obtiene los datos completos de un pago incluyendo información del residente.
+     * Obtiene los datos completos de un pago incluyendo información del residente
+     * y campos de mora (monto_original, monto_mora, fecha_aplicacion_mora, regla_mora_id).
      * El ID debe estar previamente asignado a la propiedad $this->id.
      * 
      * @return array|false Datos del pago o false si no existe
      */
     public function readOne() {
-        $query = "SELECT p.*, r.apartamento, u.nombre, u.email 
+        $query = "SELECT p.*, r.apartamento, u.nombre, u.email,
+                  p.monto_original, p.monto_mora, p.fecha_aplicacion_mora, p.regla_mora_id
                   FROM " . $this->table_name . " p
                   LEFT JOIN residentes r ON p.residente_id = r.id
                   LEFT JOIN usuarios u ON r.usuario_id = u.id
@@ -320,6 +330,46 @@ class Payment {
         $stmt->execute();
         
         return $stmt->rowCount() > 0;
+    }
+    
+    /**
+     * Obtener el monto total del pago (original + mora)
+     * 
+     * Calcula el monto total sumando el monto original y el monto de mora.
+     * Si monto_original no está definido, usa el campo monto como fallback.
+     * 
+     * @return float Monto total del pago
+     */
+    public function getMonto_total() {
+        $original = $this->monto_original ?? $this->monto ?? 0;
+        $mora = $this->monto_mora ?? 0;
+        return floatval($original) + floatval($mora);
+    }
+    
+    /**
+     * Verificar si el pago tiene mora aplicada
+     * 
+     * @return bool True si el pago tiene mora, false en caso contrario
+     */
+    public function hasLateFee() {
+        return isset($this->monto_mora) && floatval($this->monto_mora) > 0;
+    }
+    
+    /**
+     * Obtener el porcentaje de mora respecto al monto original
+     * 
+     * Calcula qué porcentaje representa la mora sobre el monto original.
+     * Si el monto original es cero, retorna 0 para evitar división por cero.
+     * 
+     * @return float Porcentaje de mora (0-100+)
+     */
+    public function getLateFeePercentage() {
+        $original = $this->monto_original ?? $this->monto ?? 0;
+        if (floatval($original) == 0) {
+            return 0;
+        }
+        $mora = $this->monto_mora ?? 0;
+        return (floatval($mora) / floatval($original)) * 100;
     }
 }
 ?>
