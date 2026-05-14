@@ -2,7 +2,7 @@
 // Configuración general de la aplicación
 
 // Configuración de la aplicación
-define('APP_NAME', 'ResiTech');
+define('APP_NAME', 'CondoWeb');
 define('APP_VERSION', '1.0.0');
 define('APP_URL', 'http://localhost/condominio');
 

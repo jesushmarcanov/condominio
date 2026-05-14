@@ -62,7 +62,7 @@ class ResidentController extends Controller {
             'piso' => ['required' => true, 'numeric' => true],
             'torre' => ['max' => 50],
             'fecha_ingreso' => ['required' => true],
-            'estado' => ['required' => true, 'in' => ['activo', 'inactivo']]
+            'estado' => ['required' => true, 'in' => getCatalogKeys(RESIDENT_STATUSES)]
         ]);
         
         if(!empty($errors)) {
@@ -238,7 +238,7 @@ class ResidentController extends Controller {
             'piso' => ['required' => true, 'numeric' => true],
             'torre' => ['max' => 50],
             'fecha_ingreso' => ['required' => true],
-            'estado' => ['required' => true, 'in' => ['activo', 'inactivo']]
+            'estado' => ['required' => true, 'in' => getCatalogKeys(RESIDENT_STATUSES)]
         ]);
         
         if(!empty($errors)) {
@@ -348,10 +348,88 @@ class ResidentController extends Controller {
             return;
         }
         
-        $this->view('resident/profile', [
-            'user' => $current_user,
-            'resident' => $resident_data
+        if($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->updateMyProfile($resident_data['id']);
+        } else {
+            $this->view('resident/profile', [
+                'user' => $current_user,
+                'resident' => $resident_data
+            ]);
+        }
+    }
+    
+    // Actualizar mi perfil de residente
+    private function updateMyProfile($resident_id) {
+        $current_user = $this->getCurrentUser();
+        
+        $data = $this->getPostData();
+        $errors = $this->validate($data, [
+            'nombre' => ['required' => true, 'max' => 100],
+            'email' => ['required' => true, 'email' => true, 'max' => 100],
+            'telefono' => ['max' => 20]
         ]);
+        
+        if(!empty($errors)) {
+            $this->resident->id = $resident_id;
+            $resident_data = $this->resident->readOne();
+            
+            $this->view('resident/profile', [
+                'user' => $current_user,
+                'resident' => $resident_data,
+                'errors' => $errors
+            ]);
+            return;
+        }
+        
+        // Obtener datos actuales del residente
+        $this->resident->id = $resident_id;
+        $current_resident = $this->resident->readOne();
+        
+        // Actualizar datos del usuario
+        $this->user->id = $current_resident['usuario_id'];
+        $this->user->nombre = $data['nombre'];
+        $this->user->email = $data['email'];
+        $this->user->telefono = $data['telefono'];
+        $this->user->rol = 'resident'; // Mantener el rol como residente
+        
+        // Verificar si el email ya existe (excluyendo el usuario actual)
+        if($data['email'] !== $current_user['email']) {
+            $this->user->email = $data['email'];
+            if($this->user->emailExists()) {
+                $this->resident->id = $resident_id;
+                $resident_data = $this->resident->readOne();
+                
+                $this->view('resident/profile', [
+                    'user' => $current_user,
+                    'resident' => $resident_data,
+                    'error' => 'El email ya está registrado por otro usuario'
+                ]);
+                return;
+            }
+        }
+        
+        // Si se proporciona nueva contraseña
+        if(!empty($data['password'])) {
+            $this->user->password = $data['password'];
+        }
+        
+        if($this->user->update()) {
+            // Actualizar sesión
+            $_SESSION['user_name'] = $this->user->nombre;
+            $_SESSION['user_email'] = $this->user->email;
+            
+            flash('Perfil actualizado correctamente', 'success');
+            redirect('/residents/myProfile');
+        } else {
+            $this->resident->id = $resident_id;
+            $resident_data = $this->resident->readOne();
+            
+            $this->view('resident/profile', [
+                'user' => $current_user,
+                'resident' => $resident_data,
+                'error' => 'Error al actualizar el perfil'
+            ]);
+        }
     }
 }
 ?>

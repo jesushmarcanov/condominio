@@ -17,6 +17,17 @@ define('ROOT_PATH', dirname(__FILE__));
 define('APP_PATH', ROOT_PATH . '/app');
 define('CONFIG_PATH', ROOT_PATH . '/config');
 
+// Cargar autoloader de Composer
+require_once ROOT_PATH . '/vendor/autoload.php';
+
+// Cargar variables de entorno
+try {
+    $dotenv = Dotenv\Dotenv::createImmutable(ROOT_PATH);
+    $dotenv->load();
+} catch (Exception $e) {
+    error_log("[check_overdue_payments.php] .env file not found or invalid: " . $e->getMessage());
+}
+
 // Registrar inicio de ejecución
 error_log("[check_overdue_payments.php] ========================================");
 error_log("[check_overdue_payments.php] Inicio de ejecución: " . date('Y-m-d H:i:s'));
@@ -30,6 +41,7 @@ try {
     require_once APP_PATH . '/models/Payment.php';
     require_once APP_PATH . '/models/Resident.php';
     require_once APP_PATH . '/models/Notification.php';
+    require_once APP_PATH . '/services/EmailService.php';
     require_once APP_PATH . '/services/NotificationService.php';
     
     // Inicializar conexión a base de datos

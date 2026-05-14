@@ -202,5 +202,62 @@ class Resident {
         
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
+
+    /**
+     * Obtener el total de apartamentos únicos registrados
+     * 
+     * Cuenta el número de apartamentos únicos en el sistema,
+     * proporcionando una métrica real de ocupación del condominio.
+     * 
+     * @return int Total de apartamentos únicos
+     */
+    public function getTotalApartments() {
+        $query = "SELECT COUNT(DISTINCT apartamento) as total_apartamentos 
+                  FROM " . $this->table_name;
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return intval($result['total_apartamentos'] ?? 0);
+    }
+
+    /**
+     * Obtener métricas de ocupación del condominio
+     * 
+     * Proporciona estadísticas detalladas sobre la ocupación:
+     * - Total de apartamentos únicos
+     * - Apartamentos ocupados (con residentes activos)
+     * - Apartamentos desocupados (sin residentes o con residentes inactivos)
+     * - Tasa de ocupación (porcentaje)
+     * 
+     * @return array Métricas de ocupación
+     */
+    public function getOccupancyMetrics() {
+        $query = "SELECT 
+                    COUNT(DISTINCT apartamento) as total_apartamentos,
+                    COUNT(DISTINCT CASE WHEN estado = 'activo' THEN apartamento END) as apartamentos_ocupados,
+                    COUNT(DISTINCT CASE WHEN estado = 'inactivo' THEN apartamento END) as apartamentos_desocupados
+                  FROM " . $this->table_name;
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        $total = intval($result['total_apartamentos'] ?? 0);
+        $ocupados = intval($result['apartamentos_ocupados'] ?? 0);
+        $desocupados = intval($result['apartamentos_desocupados'] ?? 0);
+        
+        // Calcular tasa de ocupación
+        $tasa_ocupacion = $total > 0 ? round(($ocupados / $total) * 100, 2) : 0;
+        
+        return [
+            'total_apartamentos' => $total,
+            'apartamentos_ocupados' => $ocupados,
+            'apartamentos_desocupados' => $desocupados,
+            'tasa_ocupacion' => $tasa_ocupacion
+        ];
+    }
 }
 ?>

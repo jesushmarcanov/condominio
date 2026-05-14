@@ -133,6 +133,9 @@ class ReportController extends Controller {
         
         $stats = $this->report->getGeneralStats();
         
+        // Instanciar modelo Resident para obtener métricas de ocupación
+        $resident = new Resident($this->db);
+        
         // Aplanar el array de estadísticas para la vista
         $flat_stats = [
             'total_residentes' => $stats['residentes']['total_residentes'] ?? 0,
@@ -145,7 +148,7 @@ class ReportController extends Controller {
             'pagos_atrasados' => $stats['pagos']['pagos_atrasados'] ?? 0,
             'total_pagos' => $stats['pagos']['total_pagos'] ?? 0,
             'pagos_realizados' => $stats['pagos']['pagos_realizados'] ?? 0,
-            'total_apartamentos' => 50, // Este valor debería venir de configuración o base de datos
+            'total_apartamentos' => $resident->getTotalApartments(), // Consulta dinámica desde la base de datos
             'tiempo_promedio_resolucion' => $this->getAverageResolutionTime()
         ];
         

@@ -4,11 +4,24 @@
 class PaymentController extends Controller {
     private $payment;
     private $resident;
+    private $emailService;
+    private $lateFeeService;
+    private $lateFeeHistory;
     
     public function __construct() {
         parent::__construct();
         $this->payment = new Payment($this->db);
         $this->resident = new Resident($this->db);
+        $this->emailService = new EmailService($this->db);
+        
+        // Cargar modelos y servicios de mora si existen
+        if (file_exists(APP_PATH . '/models/LateFeeRule.php')) {
+            require_once APP_PATH . '/models/LateFeeRule.php';
+            require_once APP_PATH . '/models/LateFeeHistory.php';
+            require_once APP_PATH . '/services/LateFeeService.php';
+            $this->lateFeeService = new LateFeeService($this->db);
+            $this->lateFeeHistory = new LateFeeHistory($this->db);
+        }
     }
     
     // Listar pagos
@@ -80,9 +93,9 @@ class PaymentController extends Controller {
             'concepto' => ['required' => true, 'max' => 100],
             'mes_pago' => ['required' => true],
             'fecha_pago' => ['required' => true],
-            'metodo_pago' => ['required' => true, 'in' => ['efectivo', 'transferencia', 'tarjeta', 'deposito']],
+            'metodo_pago' => ['required' => true, 'in' => getCatalogKeys(PAYMENT_METHODS)],
             'referencia' => ['max' => 100],
-            'estado' => ['required' => true, 'in' => ['pagado', 'pendiente', 'atrasado']]
+            'estado' => ['required' => true, 'in' => getCatalogKeys(PAYMENT_STATUSES)]
         ]);
         
         if(!empty($errors)) {
@@ -120,6 +133,9 @@ class PaymentController extends Controller {
         $this->payment->estado = $data['estado'];
         
         if($this->payment->create()) {
+            // Send payment confirmation email
+            // $this->sendPaymentConfirmationEmail($data['residente_id'], $this->payment->id);
+            
             flash('Pago registrado correctamente', 'success');
             redirect('/payments');
         } else {
@@ -180,9 +196,17 @@ class PaymentController extends Controller {
         } else {
             $residents = $this->resident->getActiveResidents()->fetchAll(PDO::FETCH_ASSOC);
             
+            // Obtener historial de mora si existe
+            $late_fee_history = [];
+            if (isset($this->lateFeeHistory)) {
+                $history_stmt = $this->lateFeeHistory->getByPaymentId($id);
+                $late_fee_history = $history_stmt->fetchAll(PDO::FETCH_ASSOC);
+            }
+            
             $this->view('admin/payments/edit', [
                 'payment' => $payment_data,
-                'residents' => $residents
+                'residents' => $residents,
+                'late_fee_history' => $late_fee_history
             ]);
         }
     }
@@ -196,9 +220,9 @@ class PaymentController extends Controller {
             'concepto' => ['required' => true, 'max' => 100],
             'mes_pago' => ['required' => true],
             'fecha_pago' => ['required' => true],
-            'metodo_pago' => ['required' => true, 'in' => ['efectivo', 'transferencia', 'tarjeta', 'deposito']],
+            'metodo_pago' => ['required' => true, 'in' => getCatalogKeys(PAYMENT_METHODS)],
             'referencia' => ['max' => 100],
-            'estado' => ['required' => true, 'in' => ['pagado', 'pendiente', 'atrasado']]
+            'estado' => ['required' => true, 'in' => getCatalogKeys(PAYMENT_STATUSES)]
         ]);
         
         if(!empty($errors)) {
@@ -308,6 +332,77 @@ class PaymentController extends Controller {
             'stats' => $stats,
             'monthly_income' => $monthly_income
         ]);
+    }
+    
+    /**
+     * Ajustar manualmente la mora de un pago
+     * POST /payments/:id/adjust-late-fee
+     */
+    public function adjustLateFee($id) {
+        $this->requireAdmin();
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            flash('Método no permitido', 'error');
+            redirect('/payments/edit/' . $id);
+            return;
+        }
+        
+        // Verificar que el servicio de mora esté disponible
+        if (!isset($this->lateFeeService)) {
+            flash('El sistema de mora no está disponible', 'error');
+            redirect('/payments/edit/' . $id);
+            return;
+        }
+        
+        $data = $this->getPostData();
+        
+        // Validar datos
+        $errors = $this->validate($data, [
+            'monto_mora' => ['required' => true, 'numeric' => true, 'min' => 0],
+            'justificacion' => ['required' => true, 'min' => 10, 'max' => 500]
+        ]);
+        
+        if (!empty($errors)) {
+            flash('Error en la validación: ' . implode(', ', $errors), 'error');
+            redirect('/payments/edit/' . $id);
+            return;
+        }
+        
+        // Obtener pago actual
+        $this->payment->id = $id;
+        $payment_data = $this->payment->readOne();
+        
+        if (!$payment_data) {
+            flash('Pago no encontrado', 'error');
+            redirect('/payments');
+            return;
+        }
+        
+        // Obtener usuario actual
+        if (!isset($_SESSION['user_id'])) {
+            flash('Usuario no autenticado', 'error');
+            redirect('/login');
+            return;
+        }
+        
+        $user_id = $_SESSION['user_id'];
+        
+        // Aplicar ajuste usando el servicio
+        $result = $this->lateFeeService->adjustLateFee(
+            $id,
+            floatval($data['monto_mora']),
+            $user_id,
+            $data['justificacion']
+        );
+        
+        if ($result) {
+            flash('Mora ajustada correctamente', 'success');
+            error_log("[PaymentController] Ajuste manual aplicado - Pago ID: $id, Usuario: $user_id, Nuevo monto: {$data['monto_mora']}");
+        } else {
+            flash('Error al ajustar la mora', 'error');
+        }
+        
+        redirect('/payments/edit/' . $id);
     }
 }
 ?>

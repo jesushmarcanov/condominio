@@ -64,6 +64,8 @@
                                     <th>Concepto</th>
                                     <th>Mes</th>
                                     <th>Monto</th>
+                                    <th>Mora</th>
+                                    <th>Total</th>
                                     <th>Fecha</th>
                                     <th>Método</th>
                                     <th>Estado</th>
@@ -73,13 +75,36 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php foreach($payments as $payment): ?>
-                                <tr>
+                                <?php 
+                                $total_mora = 0;
+                                foreach($payments as $payment): 
+                                    $monto_original = $payment['monto_original'] ?? $payment['monto'];
+                                    $monto_mora = $payment['monto_mora'] ?? 0;
+                                    $monto_total = $monto_original + $monto_mora;
+                                    $total_mora += $monto_mora;
+                                    $has_late_fee = $monto_mora > 0;
+                                ?>
+                                <tr <?= $has_late_fee ? 'class="table-warning"' : '' ?>>
                                     <td><?= $payment['nombre'] ?></td>
                                     <td><?= $payment['apartamento'] ?></td>
-                                    <td><?= $payment['concepto'] ?></td>
+                                    <td>
+                                        <?= $payment['concepto'] ?>
+                                        <?php if ($has_late_fee): ?>
+                                            <span class="badge bg-danger ms-1" title="Tiene mora aplicada">
+                                                <i class="fas fa-exclamation-triangle"></i> Mora
+                                            </span>
+                                        <?php endif; ?>
+                                    </td>
                                     <td><?= date('m/Y', strtotime($payment['mes_pago'])) ?></td>
-                                    <td><?= formatCurrency($payment['monto']) ?></td>
+                                    <td><?= formatCurrency($monto_original) ?></td>
+                                    <td>
+                                        <?php if ($has_late_fee): ?>
+                                            <span class="text-danger">+<?= formatCurrency($monto_mora) ?></span>
+                                        <?php else: ?>
+                                            <span class="text-muted">-</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td><strong><?= formatCurrency($monto_total) ?></strong></td>
                                     <td><?= formatDate($payment['fecha_pago']) ?></td>
                                     <td>
                                         <span class="badge bg-info"><?= $payment['metodo_pago'] ?></span>
@@ -120,12 +145,18 @@
                     
                     <!-- Resumen -->
                     <div class="row mt-3">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <strong>Total de pagos:</strong> <?= count($payments) ?>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <strong>Total monto:</strong> <?= formatCurrency(array_sum(array_column($payments, 'monto'))) ?>
                         </div>
+                        <?php if ($total_mora > 0): ?>
+                        <div class="col-md-4">
+                            <strong class="text-danger">Total mora pendiente:</strong> 
+                            <span class="text-danger"><?= formatCurrency($total_mora) ?></span>
+                        </div>
+                        <?php endif; ?>
                     </div>
                     
                 <?php else: ?>

@@ -1,0 +1,132 @@
+================================================================================
+  CONFIGURACIÓN AUTOMÁTICA DEL CRON JOB - CondoWeb
+================================================================================
+
+Para configurar la ejecución automática diaria del sistema de notificaciones
+de pagos vencidos, sigue estos pasos:
+
+================================================================================
+OPCIÓN 1: Usar el script automático (MÁS FÁCIL)
+================================================================================
+
+1. Busca el archivo: setup_cron_job.bat
+
+2. Haz CLIC DERECHO sobre el archivo
+
+3. Selecciona "Ejecutar como administrador"
+
+4. Sigue las instrucciones en pantalla
+
+5. ¡Listo! El sistema se configurará automáticamente
+
+================================================================================
+OPCIÓN 2: Usar PowerShell (RECOMENDADO)
+================================================================================
+
+1. Busca el archivo: setup_cron_job.ps1
+
+2. Haz CLIC DERECHO sobre el archivo
+
+3. Selecciona "Ejecutar con PowerShell"
+
+4. Si aparece un mensaje de seguridad, selecciona "Sí"
+
+5. Sigue las instrucciones en pantalla
+
+6. ¡Listo! El sistema se configurará automáticamente
+
+================================================================================
+VERIFICACIÓN
+================================================================================
+
+Después de ejecutar cualquiera de los scripts:
+
+1. Presiona Windows + R
+
+2. Escribe: taskschd.msc
+
+3. Presiona Enter
+
+4. Busca la carpeta "CondoWeb" en el panel izquierdo
+
+5. Deberías ver la tarea "CondoWeb-Pagos-Vencidos"
+
+6. Haz clic derecho sobre ella y selecciona "Ejecutar" para probar
+
+7. Revisa el archivo: logs\cron_execution.log
+
+================================================================================
+CONFIGURACIÓN
+================================================================================
+
+La tarea está configurada para:
+
+- Ejecutarse DIARIAMENTE a las 8:00 AM
+- Detectar pagos vencidos automáticamente
+- Enviar emails a los residentes con pagos pendientes
+- Registrar todas las ejecuciones en logs
+
+================================================================================
+MODIFICAR LA HORA
+================================================================================
+
+Si quieres cambiar la hora de ejecución:
+
+1. Abre el Programador de tareas (taskschd.msc)
+
+2. Busca "CondoWeb-Pagos-Vencidos"
+
+3. Haz clic derecho -> Propiedades
+
+4. Ve a la pestaña "Desencadenadores"
+
+5. Haz doble clic en el desencadenador
+
+6. Cambia la hora
+
+7. Haz clic en Aceptar
+
+================================================================================
+DESACTIVAR TEMPORALMENTE
+================================================================================
+
+Si necesitas desactivar el envío automático:
+
+1. Abre el Programador de tareas (taskschd.msc)
+
+2. Busca "CondoWeb-Pagos-Vencidos"
+
+3. Haz clic derecho -> Deshabilitar
+
+Para reactivar:
+- Haz clic derecho -> Habilitar
+
+================================================================================
+SOLUCIÓN DE PROBLEMAS
+================================================================================
+
+Si el script no funciona:
+
+1. Asegúrate de ejecutarlo como ADMINISTRADOR
+
+2. Verifica que XAMPP esté instalado en C:\xampp
+
+3. Verifica que el proyecto esté en C:\xampp\htdocs\condominio
+
+4. Si las rutas son diferentes, edita los archivos:
+   - run_overdue_payments.bat
+   - setup_cron_job.bat
+   - setup_cron_job.ps1
+
+5. Consulta el archivo CRON_JOB_SETUP.md para más detalles
+
+================================================================================
+SOPORTE
+================================================================================
+
+Para más información, consulta:
+- CRON_JOB_SETUP.md (guía completa)
+- EMAIL_SETUP_GUIDE.md (configuración de emails)
+- logs\cron_execution.log (registro de ejecuciones)
+
+================================================================================
