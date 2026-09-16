@@ -139,11 +139,7 @@ class UserController extends Controller {
         $current_user = $this->getCurrentUser();
         
         $data = $this->getPostData();
-        $errors = $this->validate($data, [
-            'nombre' => ['required' => true, 'max' => 100],
-            'email' => ['required' => true, 'email' => true, 'max' => 100],
-            'telefono' => ['max' => 20]
-        ]);
+        $errors = $this->validateRules('user.profile', $data);
         
         if(!empty($errors)) {
             $this->view('user/profile', [
@@ -224,13 +220,7 @@ class UserController extends Controller {
     // Guardar nuevo usuario
     private function storeUser() {
         $data = $this->getPostData();
-        $errors = $this->validate($data, [
-            'nombre' => ['required' => true, 'max' => 100],
-            'email' => ['required' => true, 'email' => true, 'max' => 100],
-            'password' => ['required' => true, 'min' => 6],
-            'rol' => ['required' => true, 'in' => ['admin', 'resident']],
-            'telefono' => ['max' => 20]
-        ]);
+        $errors = $this->validateRules('user.store', $data);
         
         if(!empty($errors)) {
             $this->view('admin/users/create', [
@@ -291,12 +281,7 @@ class UserController extends Controller {
     // Actualizar usuario
     private function updateUser($id) {
         $data = $this->getPostData();
-        $errors = $this->validate($data, [
-            'nombre' => ['required' => true, 'max' => 100],
-            'email' => ['required' => true, 'email' => true, 'max' => 100],
-            'rol' => ['required' => true, 'in' => ['admin', 'resident']],
-            'telefono' => ['max' => 20]
-        ]);
+        $errors = $this->validateRules('user.update', $data);
         
         if(!empty($errors)) {
             $this->view('admin/users/edit', [

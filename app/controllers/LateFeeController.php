@@ -6,7 +6,7 @@
  * Solo accesible para administradores.
  * 
  * @package App\Controllers
- * @author Sistema de Gestión de Condominio
+ * @author Jesús H. Marcano V.
  * @version 1.0.0
  */
 
@@ -236,11 +236,7 @@ class LateFeeController extends Controller {
             $data = $this->getPostData();
             
             // Validar datos de simulación
-            $errors = $this->validate($data, [
-                'monto' => ['required' => true, 'numeric' => true, 'min' => 0.01],
-                'dias_atraso' => ['required' => true, 'numeric' => true, 'min' => 0],
-                'regla_id' => ['required' => true, 'numeric' => true]
-            ]);
+            $errors = $this->validateRules('late_fee.simulate', $data);
             
             if(empty($errors)) {
                 // Obtener regla seleccionada
@@ -348,10 +344,7 @@ class LateFeeController extends Controller {
         $data = $this->getPostData();
         
         // Validar datos
-        $errors = $this->validate($data, [
-            'monto_mora' => ['required' => true, 'numeric' => true, 'min' => 0],
-            'justificacion' => ['required' => true, 'min' => 10, 'max' => 500]
-        ]);
+        $errors = $this->validateRules('late_fee.adjust', $data);
         
         if(!empty($errors)) {
             flash('Error en la validación: ' . implode(', ', $errors), 'error');
@@ -428,13 +421,13 @@ class LateFeeController extends Controller {
         
         // Paso 4: Tope máximo
         if($rule['tope_maximo']) {
-            $explicacion .= "\n4. Tope máximo configurado: \${$rule['tope_maximo']}\n";
+            $explicacion .= "\n4. Tope máximo configurado: " . formatAmountIn($rule['tope_maximo'], baseCurrency()) . "\n";
             if($mora_calculada >= $rule['tope_maximo']) {
                 $explicacion .= "   ⚠ Tope aplicado - Mora limitada al máximo\n";
             }
         }
         
-        $explicacion .= "\nMora final: \$" . number_format($mora_calculada, 2);
+        $explicacion .= "\nMora final: " . formatAmountIn($mora_calculada, baseCurrency());
         
         return $explicacion;
     }
@@ -656,15 +649,7 @@ class LateFeeController extends Controller {
      * @return array Errores de validación
      */
     private function validateLateFeeRule($data) {
-        $errors = $this->validate($data, [
-            'nombre' => ['required' => true, 'max' => 100],
-            'dias_gracia' => ['required' => true, 'numeric' => true],
-            'tipo_recargo' => ['required' => true, 'in' => ['porcentaje', 'monto_fijo']],
-            'valor_recargo' => ['required' => true, 'numeric' => true],
-            'frecuencia' => ['required' => true, 'in' => ['unica', 'diaria', 'semanal', 'mensual']],
-            'tope_maximo' => ['numeric' => true],
-            'tipo_pago' => ['max' => 50]
-        ]);
+        $errors = $this->validateRules('late_fee_rule.store', $data);
         
         // Validaciones adicionales
         if(isset($data['dias_gracia']) && is_numeric($data['dias_gracia']) && $data['dias_gracia'] < 0) {

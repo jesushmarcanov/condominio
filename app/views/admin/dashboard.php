@@ -47,7 +47,7 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h4><?= formatCurrency($stats['pagos']['total_ingresos']) ?></h4>
+                        <h4><?= formatCurrencyDual($stats['pagos']['total_ingresos']) ?></h4>
                         <p class="mb-0">Total Ingresos</p>
                     </div>
                     <div class="align-self-center">
@@ -98,7 +98,7 @@
                                 <?php foreach(array_slice($stats['pagos_recientes'], 0, 5) as $pago): ?>
                                 <tr>
                                     <td><?= $pago['nombre'] ?></td>
-                                    <td><?= formatCurrency($pago['monto']) ?></td>
+                                    <td><?= formatCurrencyFrom($pago['monto'], $pago['moneda'] ?? baseCurrency()) ?></td>
                                     <td>
                                         <span class="badge bg-<?= $pago['estado'] == 'pagado' ? 'success' : 'warning' ?>">
                                             <?= $pago['estado'] ?>

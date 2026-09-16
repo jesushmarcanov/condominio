@@ -45,15 +45,15 @@ ob_start();
             </tr>
             <tr>
                 <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: bold;">Monto Original:</td>
-                <td style="padding: 12px; border: 1px solid #dee2e6;">$<?php echo number_format($payment_amount, 2); ?></td>
+                <td style="padding: 12px; border: 1px solid #dee2e6;"><?php echo formatAmountIn($payment_amount, baseCurrency()); ?></td>
             </tr>
             <tr style="background-color: #ffebee;">
                 <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: bold; color: #d32f2f;">Recargo por Mora:</td>
-                <td style="padding: 12px; border: 1px solid #dee2e6; color: #d32f2f; font-weight: bold;">+$<?php echo number_format($late_fee_amount, 2); ?></td>
+                <td style="padding: 12px; border: 1px solid #dee2e6; color: #d32f2f; font-weight: bold;">+<?php echo formatAmountIn($late_fee_amount, baseCurrency()); ?></td>
             </tr>
             <tr style="background-color: #e8f5e9;">
                 <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: bold; font-size: 16px;">Monto Total a Pagar:</td>
-                <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: bold; font-size: 16px; color: #2e7d32;">$<?php echo number_format($total_amount, 2); ?></td>
+                <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: bold; font-size: 16px; color: #2e7d32;"><?php echo formatAmountIn($total_amount, baseCurrency()); ?></td>
             </tr>
             <tr>
                 <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: bold;">Fecha de Vencimiento:</td>

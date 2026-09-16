@@ -143,7 +143,7 @@
                                 <?php foreach(array_slice($stats['mis_pagos'], 0, 5) as $pago): ?>
                                 <tr>
                                     <td><?= $pago['concepto'] ?></td>
-                                    <td><?= formatCurrency($pago['monto']) ?></td>
+                                    <td><?= formatCurrencyFrom($pago['monto'], $pago['moneda'] ?? baseCurrency()) ?></td>
                                     <td>
                                         <span class="badge bg-<?= $pago['estado'] == 'pagado' ? 'success' : 'warning' ?>">
                                             <?= $pago['estado'] ?>

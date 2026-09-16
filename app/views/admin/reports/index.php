@@ -111,7 +111,7 @@
                     </div>
                     <div class="col-md-3">
                         <div class="stat-item">
-                            <h4 class="text-info"><?= formatCurrency($stats['ingresos_mensuales']) ?></h4>
+                            <h4 class="text-info"><?= formatCurrencyDual($stats['ingresos_mensuales']) ?></h4>
                             <p class="text-muted">Ingresos Mensuales</p>
                         </div>
                     </div>
@@ -133,7 +133,7 @@
                 <div class="row mt-4">
                     <div class="col-md-3">
                         <div class="stat-item">
-                            <h6 class="text-primary"><?= formatCurrency($stats['pagos']['total_ingresos']) ?></h6>
+                            <h6 class="text-primary"><?= formatCurrencyDual($stats['pagos']['total_ingresos']) ?></h6>
                             <p class="text-muted small">Total Ingresos</p>
                         </div>
                     </div>

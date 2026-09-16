@@ -39,7 +39,7 @@ class EmailService {
             'username' => $_ENV['MAIL_USERNAME'] ?? getenv('MAIL_USERNAME'),
             'password' => $_ENV['MAIL_PASSWORD'] ?? getenv('MAIL_PASSWORD'),
             'from_address' => $_ENV['MAIL_FROM_ADDRESS'] ?? getenv('MAIL_FROM_ADDRESS'),
-            'from_name' => $_ENV['MAIL_FROM_NAME'] ?? getenv('MAIL_FROM_NAME') ?: 'ResiTech',
+            'from_name' => $_ENV['MAIL_FROM_NAME'] ?? getenv('MAIL_FROM_NAME') ?: 'CondoWeb',
             'sendgrid_api_key' => $_ENV['SENDGRID_API_KEY'] ?? getenv('SENDGRID_API_KEY'),
             'test_mode' => ($_ENV['MAIL_TEST_MODE'] ?? getenv('MAIL_TEST_MODE')) === 'true'
         ];

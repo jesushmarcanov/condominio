@@ -70,6 +70,7 @@
                     <?php endif; ?>
 
                     <form method="POST" action="<?= APP_URL ?>/login">
+                        <?= csrf_field() ?>
                         <div class="mb-3">
                             <label for="email" class="form-label">Email</label>
                             <div class="input-group">

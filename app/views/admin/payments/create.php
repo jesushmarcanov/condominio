@@ -26,6 +26,7 @@
                 <?php endif; ?>
 
                 <form method="POST" action="<?= APP_URL ?>/payments" class="needs-validation" novalidate>
+                    <?= csrf_field() ?>
                     <div class="mb-3">
                         <label for="residente_id" class="form-label">Residente</label>
                         <select class="form-select" id="residente_id" name="residente_id" required>
@@ -146,9 +147,14 @@
                         <a href="<?= APP_URL ?>/payments" class="btn btn-secondary">
                             <i class="fas fa-times"></i> Cancelar
                         </a>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save"></i> Guardar Pago
-                        </button>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Guardar Pago
+                            </button>
+                            <button type="submit" name="save_and_print" value="1" class="btn btn-success">
+                                <i class="fas fa-print"></i> Guardar e Imprimir Recibo
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>

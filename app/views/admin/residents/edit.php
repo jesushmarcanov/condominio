@@ -29,6 +29,7 @@
                 <?php endif; ?>
 
                 <form method="POST" action="<?= APP_URL ?>/residents/edit/<?= $resident['id'] ?>" class="needs-validation" novalidate>
+                    <?= csrf_field() ?>
                     <div class="row">
                         <div class="col-md-6">
                             <h6 class="mb-3">Información Personal</h6>

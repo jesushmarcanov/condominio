@@ -43,6 +43,7 @@
                                     </span>
                                     <?php if(!$notification['leida']): ?>
                                     <form method="POST" action="<?= APP_URL ?>/notifications/markAsRead/<?= $notification['id'] ?>" class="d-inline">
+                                        <?= csrf_field() ?>
                                         <button type="submit" class="btn btn-sm btn-outline-primary" title="Marcar como leída">
                                             <i class="fas fa-check"></i> Marcar como leída
                                         </button>

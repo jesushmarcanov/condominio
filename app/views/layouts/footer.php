@@ -7,7 +7,7 @@
         <div class="container-fluid">
             <div class="row">
                 <div class="col-md-6">
-                    <p class="mb-0">&copy; <?= date('Y') ?> <?= APP_NAME ?>. Todos los derechos reservados.</p>
+                    <p class="mb-0">&copy; <?= date('Y') ?> Jesús H. Marcano V. — <?= APP_NAME ?>. Todos los derechos reservados.</p>
                 </div>
                 <div class="col-md-6 text-md-end">
                     <p class="mb-0">Versión <?= APP_VERSION ?></p>
@@ -34,11 +34,37 @@
             const sidebarCollapse = document.getElementById('sidebarCollapse');
             const sidebar = document.getElementById('sidebar');
             const content = document.getElementById('content');
+            const sidebarHeader = document.getElementById('sidebarHeader');
             
             if (sidebarCollapse) {
                 sidebarCollapse.addEventListener('click', function() {
                     sidebar.classList.toggle('active');
                     content.classList.toggle('active');
+                });
+            }
+
+            // Alternar modo mini (solo iconos) al hacer clic en el logo/nombre
+            function toggleMiniSidebar(force) {
+                if (window.innerWidth <= 768) {
+                    return; // en móvil se mantiene el comportamiento actual
+                }
+                const isMini = typeof force === 'boolean'
+                    ? force
+                    : !document.body.classList.contains('sidebar-mini');
+                document.body.classList.toggle('sidebar-mini', isMini);
+                sidebar.classList.toggle('mini', isMini);
+                content.classList.toggle('mini', isMini);
+            }
+
+            if (sidebarHeader) {
+                sidebarHeader.addEventListener('click', function() {
+                    toggleMiniSidebar();
+                });
+                sidebarHeader.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        toggleMiniSidebar();
+                    }
                 });
             }
             

@@ -39,7 +39,9 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h4 class="card-title"><?= formatCurrency(array_sum(array_column($payments, 'monto'))) ?></h4>
+                        <h4 class="card-title"><?= formatCurrencyDual(array_sum(array_map(function($p) {
+                            return convertCurrency($p['monto'], $p['moneda'] ?? baseCurrency(), baseCurrency());
+                        }, $payments))) ?></h4>
                         <p class="card-text">Monto Total Pendiente</p>
                     </div>
                     <div class="align-self-center">
@@ -94,7 +96,7 @@
                                     <td><?= $payment['apartamento'] ?></td>
                                     <td><?= $payment['concepto'] ?></td>
                                     <td><?= date('m/Y', strtotime($payment['mes_pago'])) ?></td>
-                                    <td><?= formatCurrency($payment['monto']) ?></td>
+                                    <td><?= formatCurrencyFrom($payment['monto'], $payment['moneda'] ?? baseCurrency()) ?></td>
                                     <td><?= formatDate($payment['fecha_pago']) ?></td>
                                     <td>
                                         <span class="badge bg-<?= 

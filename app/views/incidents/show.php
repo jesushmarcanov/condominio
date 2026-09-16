@@ -294,12 +294,18 @@ function changeStatus(newStatus) {
         statusInput.name = 'estado';
         statusInput.value = newStatus;
         
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = '_csrf_token';
+        csrfInput.value = '<?= csrf_token() ?>';
+        
         const notesInput = document.createElement('input');
         notesInput.type = 'hidden';
         notesInput.name = 'notas_admin';
         notesInput.value = 'Cambio de estado desde el dashboard';
         
         form.appendChild(statusInput);
+        form.appendChild(csrfInput);
         form.appendChild(notesInput);
         document.body.appendChild(form);
         form.submit();

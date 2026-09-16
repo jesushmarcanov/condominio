@@ -191,7 +191,7 @@ const monthlyIncomeChart = new Chart(monthlyIncomeCtx, {
             tooltip: {
                 callbacks: {
                     label: function(context) {
-                        return 'Mora: $' + context.parsed.y.toFixed(2);
+                        return 'Mora: <?= currencySymbol() ?>' + context.parsed.y.toFixed(2);
                     }
                 }
             }
@@ -201,7 +201,7 @@ const monthlyIncomeChart = new Chart(monthlyIncomeCtx, {
                 beginAtZero: true,
                 ticks: {
                     callback: function(value) {
-                        return '$' + value.toFixed(2);
+                        return '<?= currencySymbol() ?>' + value.toFixed(2);
                     }
                 }
             }

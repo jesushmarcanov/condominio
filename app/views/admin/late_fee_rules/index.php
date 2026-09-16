@@ -126,6 +126,7 @@ require_once APP_PATH . '/views/layouts/header.php';
                                                     
                                                     <form method="POST" action="/late-fee-rules/toggle/<?php echo $rule['id']; ?>" 
                                                           style="display: inline;">
+                                                        <?= csrf_field() ?>
                                                         <button type="submit" 
                                                                 class="btn btn-sm btn-outline-<?php echo $rule['activa'] ? 'warning' : 'success'; ?>" 
                                                                 title="<?php echo $rule['activa'] ? 'Desactivar' : 'Activar'; ?>">
@@ -197,6 +198,7 @@ require_once APP_PATH . '/views/layouts/header.php';
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                 <form id="deleteForm" method="POST" style="display: inline;">
+                    <?= csrf_field() ?>
                     <button type="submit" class="btn btn-danger">Eliminar</button>
                 </form>
             </div>

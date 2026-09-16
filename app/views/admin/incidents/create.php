@@ -36,6 +36,7 @@
                 <?php endif; ?>
                 
                 <form method="POST" action="<?= APP_URL ?>/incidents/create">
+                    <?= csrf_field() ?>
                     <div class="mb-3">
                         <label for="residente_id" class="form-label">Residente *</label>
                         <select class="form-select" id="residente_id" name="residente_id" required>

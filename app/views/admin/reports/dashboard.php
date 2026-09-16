@@ -35,8 +35,8 @@
         <div class="card bg-success text-white">
             <div class="card-body">
                 <h5><i class="fas fa-dollar-sign"></i> Ingresos Totales</h5>
-                <h3><?= formatCurrency($stats['total_ingresos']) ?></h3>
-                <small>Mes actual: <?= formatCurrency($stats['ingresos_mes']) ?></small>
+                <h3><?= formatCurrencyDual($stats['total_ingresos']) ?></h3>
+                <small>Mes actual: <?= formatCurrencyDual($stats['ingresos_mes']) ?></small>
             </div>
         </div>
     </div>

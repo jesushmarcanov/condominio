@@ -53,7 +53,7 @@
         <div class="card bg-success text-white">
             <div class="card-body">
                 <h5><i class="fas fa-dollar-sign"></i> Total Ingresos</h5>
-                <h3><?= formatCurrency($total_ingresos) ?></h3>
+                <h3><?= formatCurrencyDual($total_ingresos) ?></h3>
                 <small>Año <?= $year ?></small>
             </div>
         </div>
@@ -71,7 +71,7 @@
         <div class="card bg-warning text-white">
             <div class="card-body">
                 <h5><i class="fas fa-chart-line"></i> Promedio Mensual</h5>
-                <h3><?= formatCurrency($total_ingresos / 12) ?></h3>
+                <h3><?= formatCurrencyDual($total_ingresos / 12) ?></h3>
                 <small>Promedio de ingresos</small>
             </div>
         </div>
@@ -133,7 +133,7 @@
                             ?>
                                 <tr>
                                     <td><strong><?= $meses[$row['mes'] - 1] ?></strong></td>
-                                    <td class="fw-bold text-success"><?= formatCurrency($row['ingresos']) ?></td>
+                                    <td class="fw-bold text-success"><?= formatCurrencyDual($row['ingresos']) ?></td>
                                     <td><?= $row['pagos_realizados'] ?></td>
                                     <td><?= $row['pagos_pendientes'] ?></td>
                                     <td>
@@ -144,7 +144,7 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td><?= formatCurrency($promedio_pago) ?></td>
+                                    <td><?= formatCurrencyDual($promedio_pago) ?></td>
                                     <td>
                                         <?php if($row['ingresos'] > 0): ?>
                                             <i class="fas fa-arrow-up text-success"></i> 
@@ -160,11 +160,11 @@
                         <tfoot class="table-dark">
                             <tr>
                                 <th>TOTAL</th>
-                                <th class="fw-bold text-success"><?= formatCurrency($total_ingresos) ?></th>
+                                <th class="fw-bold text-success"><?= formatCurrencyDual($total_ingresos) ?></th>
                                 <th><?= $total_pagos ?></th>
                                 <th><?= array_sum(array_column($data, 'pagos_pendientes')) ?></th>
                                 <th><?= round(array_sum(array_column($data, 'pagos_realizados')) / $total_pagos * 100, 1) ?>%</th>
-                                <th><?= formatCurrency($total_ingresos / $total_pagos) ?></th>
+                                <th><?= formatCurrencyDual($total_ingresos / $total_pagos) ?></th>
                                 <th>
                                     <i class="fas fa-chart-line text-success"></i> 
                                     <span class="text-success">Crecimiento</span>
@@ -224,14 +224,14 @@
                     <div class="col-md-3">
                         <div class="text-center">
                             <h6 class="text-muted">Meta Anual</h6>
-                            <h4 class="text-primary"><?= formatCurrency($total_ingresos * 1.15) ?></h4>
+                            <h4 class="text-primary"><?= formatCurrencyDual($total_ingresos * 1.15) ?></h4>
                             <small class="text-success">+15% objetivo</small>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="text-center">
                             <h6 class="text-muted">Proyección Q1</h6>
-                            <h4 class="text-info"><?= formatCurrency($total_ingresos * 0.25) ?></h4>
+                            <h4 class="text-info"><?= formatCurrencyDual($total_ingresos * 0.25) ?></h4>
                             <small class="text-muted">Primer trimestre</small>
                         </div>
                     </div>
@@ -245,7 +245,7 @@
                     <div class="col-md-3">
                         <div class="text-center">
                             <h6 class="text-muted">Ingresos Extra</h6>
-                            <h4 class="text-warning"><?= formatCurrency($total_ingresos * 0.05) ?></h4>
+                            <h4 class="text-warning"><?= formatCurrencyDual($total_ingresos * 0.05) ?></h4>
                             <small class="text-muted">Servicios adicionales</small>
                         </div>
                     </div>

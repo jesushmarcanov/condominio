@@ -2,6 +2,12 @@
     "name": "condominio/sistema-gestion",
     "description": "Sistema de Gestión de Condominio",
     "type": "project",
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "Jesús H. Marcano V."
+        }
+    ],
     "require": {
         "php": ">=7.4",
         "dompdf/dompdf": "^2.0",

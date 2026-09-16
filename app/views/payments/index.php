@@ -71,6 +71,8 @@
                                     <th>Estado</th>
                                     <?php if($is_admin): ?>
                                     <th>Acciones</th>
+                                    <?php else: ?>
+                                    <th>Acciones</th>
                                     <?php endif; ?>
                                 </tr>
                             </thead>
@@ -78,6 +80,7 @@
                                 <?php 
                                 $total_mora = 0;
                                 foreach($payments as $payment): 
+                                    $ccy = $payment['moneda'] ?? baseCurrency();
                                     $monto_original = $payment['monto_original'] ?? $payment['monto'];
                                     $monto_mora = $payment['monto_mora'] ?? 0;
                                     $monto_total = $monto_original + $monto_mora;
@@ -96,15 +99,15 @@
                                         <?php endif; ?>
                                     </td>
                                     <td><?= date('m/Y', strtotime($payment['mes_pago'])) ?></td>
-                                    <td><?= formatCurrency($monto_original) ?></td>
+                                    <td><?= formatCurrencyFrom($monto_original, $ccy) ?></td>
                                     <td>
                                         <?php if ($has_late_fee): ?>
-                                            <span class="text-danger">+<?= formatCurrency($monto_mora) ?></span>
+                                            <span class="text-danger">+<?= formatCurrencyFrom($monto_mora, $ccy) ?></span>
                                         <?php else: ?>
                                             <span class="text-muted">-</span>
                                         <?php endif; ?>
                                     </td>
-                                    <td><strong><?= formatCurrency($monto_total) ?></strong></td>
+                                    <td><strong><?= formatCurrencyFrom($monto_total, $ccy) ?></strong></td>
                                     <td><?= formatDate($payment['fecha_pago']) ?></td>
                                     <td>
                                         <span class="badge bg-info"><?= $payment['metodo_pago'] ?></span>
@@ -124,6 +127,12 @@
                                                class="btn btn-sm btn-outline-primary" title="Ver">
                                                 <i class="fas fa-eye"></i>
                                             </a>
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-outline-success" 
+                                                    title="Imprimir Recibo"
+                                                    onclick="openReceipt(<?= $payment['id'] ?>)">
+                                                <i class="fas fa-print"></i>
+                                            </button>
                                             <a href="<?= APP_URL ?>/payments/edit/<?= $payment['id'] ?>" 
                                                class="btn btn-sm btn-outline-warning" title="Editar">
                                                 <i class="fas fa-edit"></i>
@@ -135,6 +144,28 @@
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </div>
+                                    </td>
+                                    <?php else: ?>
+                                    <td>
+                                        <?php if($payment['estado'] != 'pagado'): ?>
+                                        <a href="<?= APP_URL ?>/payments/pay/<?= $payment['id'] ?>"
+                                           class="btn btn-sm btn-success" title="Pagar en Línea">
+                                            <i class="fas fa-credit-card"></i> Pagar en Línea
+                                        </a>
+                                        <?php else: ?>
+                                        <a href="<?= APP_URL ?>/payments/show/<?= $payment['id'] ?>" 
+                                           class="btn btn-sm btn-outline-primary" title="Ver">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <?php if($payment['estado'] == 'pagado'): ?>
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-success" 
+                                                title="Imprimir Recibo"
+                                                onclick="openReceipt(<?= $payment['id'] ?>)">
+                                            <i class="fas fa-print"></i>
+                                        </button>
+                                        <?php endif; ?>
+                                        <?php endif; ?>
                                     </td>
                                     <?php endif; ?>
                                 </tr>
@@ -149,12 +180,14 @@
                             <strong>Total de pagos:</strong> <?= count($payments) ?>
                         </div>
                         <div class="col-md-4">
-                            <strong>Total monto:</strong> <?= formatCurrency(array_sum(array_column($payments, 'monto'))) ?>
+                            <strong>Total monto:</strong> <?= formatCurrencyDual(array_sum(array_map(function($p) {
+                                return convertCurrency($p['monto'], $p['moneda'] ?? baseCurrency(), baseCurrency());
+                            }, $payments))) ?>
                         </div>
                         <?php if ($total_mora > 0): ?>
                         <div class="col-md-4">
                             <strong class="text-danger">Total mora pendiente:</strong> 
-                            <span class="text-danger"><?= formatCurrency($total_mora) ?></span>
+                            <span class="text-danger"><?= formatCurrencyDual($total_mora) ?></span>
                         </div>
                         <?php endif; ?>
                     </div>
@@ -176,5 +209,54 @@
         </div>
     </div>
 </div>
+
+<!-- Modal Recibo de Pago -->
+<div class="modal fade" id="receiptModal" tabindex="-1" aria-labelledby="receiptModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="receiptModalLabel">
+                    <i class="fas fa-receipt"></i> Recibo de Pago
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body p-0" style="background:#e9ecef;">
+                <iframe id="receiptFrame" src="about:blank" style="width:100%;height:70vh;border:0;display:block;"></iframe>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="receiptPrintBtn">
+                    <i class="fas fa-print"></i> Imprimir
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function openReceipt(paymentId) {
+    document.getElementById('receiptFrame').src = APP_URL + '/payments/receipt/' + paymentId + '?embed=1';
+    const modal = new bootstrap.Modal(document.getElementById('receiptModal'));
+    modal.show();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const printBtn = document.getElementById('receiptPrintBtn');
+    if (printBtn) {
+        printBtn.addEventListener('click', function() {
+            const frame = document.getElementById('receiptFrame');
+            if (frame && frame.contentWindow) {
+                frame.contentWindow.print();
+            }
+        });
+    }
+
+    // Auto-abrir el recibo tras "Guardar e Imprimir Recibo" (?print=ID)
+    const printPayment = new URLSearchParams(window.location.search).get('print');
+    if (printPayment) {
+        openReceipt(printPayment);
+    }
+});
+</script>
 
 <?php include APP_PATH . '/views/layouts/footer.php'; ?>

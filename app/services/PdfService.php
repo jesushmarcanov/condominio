@@ -97,12 +97,12 @@ tr:nth-child(even) { background-color: #f8f9fa; }
 <td>' . htmlspecialchars($payment['descripcion'] ?? $payment['concepto'] ?? 'N/A') . '</td>
 <td>' . date('d/m/Y', strtotime($payment['fecha_pago'])) . '</td>
 <td>' . ucfirst($payment['metodo_pago']) . '</td>
-<td>$' . number_format($payment['monto'], 2) . '</td>
+<td>' . formatAmountIn($payment['monto'], $payment['moneda'] ?? baseCurrency()) . '</td>
 </tr>';
         }
         
         $html .= '</tbody></table>
-<div class="total"><p>TOTAL: $' . number_format($total, 2) . '</p></div>
+<div class="total"><p>TOTAL: ' . formatAmountIn($total, baseCurrency()) . '</p></div>
 <div class="footer"><p>Este documento fue generado automáticamente por el Sistema de Gestión de Condominio</p></div>
 </body></html>';
         
@@ -148,12 +148,12 @@ tr:nth-child(even) { background-color: #f8f9fa; }
 <td>' . htmlspecialchars($payment['mes_pago']) . '</td>
 <td>' . date('d/m/Y', strtotime($payment['fecha_vencimiento'])) . '</td>
 <td class="' . $status_class . '">' . ucfirst($payment['estado']) . '</td>
-<td>$' . number_format($payment['monto'], 2) . '</td>
+<td>' . formatAmountIn($payment['monto'], $payment['moneda'] ?? baseCurrency()) . '</td>
 </tr>';
         }
         
         $html .= '</tbody></table>
-<div class="total"><p>TOTAL PENDIENTE: $' . number_format($total, 2) . '</p></div>
+<div class="total"><p>TOTAL PENDIENTE: ' . formatAmountIn($total, baseCurrency()) . '</p></div>
 <div class="footer"><p>Este documento fue generado automáticamente por el Sistema de Gestión de Condominio</p></div>
 </body></html>';
         
@@ -295,7 +295,7 @@ td { padding: 8px 0; }
 <div class="section">
 <h3>Información del Residente</h3>
 <table>
-<tr><td class="label">Nombre:</td><td>' . htmlspecialchars($payment['residente_nombre'] ?? 'N/A') . '</td></tr>
+<tr><td class="label">Nombre:</td><td>' . htmlspecialchars($payment['nombre'] ?? $payment['residente_nombre'] ?? 'N/A') . '</td></tr>
 <tr><td class="label">Apartamento:</td><td>' . htmlspecialchars($payment['apartamento'] ?? 'N/A') . '</td></tr>
 <tr><td class="label">Email:</td><td>' . htmlspecialchars($payment['email'] ?? $payment['residente_email'] ?? 'N/A') . '</td></tr>
 </table>
@@ -312,10 +312,12 @@ td { padding: 8px 0; }
 </table>
 </div>
 <div class="amount-box">
-<h2>MONTO TOTAL: $' . number_format($payment['monto'], 2) . '</h2>
+<h2>MONTO TOTAL: ' . formatAmountIn($payment['monto'], $payment['moneda'] ?? baseCurrency()) . '</h2>
+' . (dualCurrencyEnabled() && bcvRate() ? '<p style="margin:8px 0 0;font-size:15px;color:#e9ecef;">' . formatCurrencyDualText(convertCurrency($payment['monto'], $payment['moneda'] ?? baseCurrency(), baseCurrency())) . '</p>' : '') . '
 </div>
 <div class="footer">
 <p>Este comprobante fue generado automáticamente por el Sistema de Gestión de Condominio</p>
+' . (bcvRate() ? '<p>Tasa de cambio: 1 USD = Bs ' . number_format(bcvRate(), 2) . ' (vigente ' . date('d/m/Y', strtotime(bcvRateDate())) . ')</p>' : '') . '
 <p>Para cualquier consulta, por favor contacte a la administración</p>
 </div>
 </body></html>';

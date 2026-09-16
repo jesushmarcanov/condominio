@@ -369,3 +369,13 @@ Para configurar el sistema de notificaciones automáticas, consulte el archivo [
 ---
 
 **Desarrollado con ❤️ para la gestión eficiente de condominios**
+
+## Licencia
+
+Copyright (c) 2026 Jesús H. Marcano V. — **CondoWeb / Sistema de Gestión de Condominio**. Todos los derechos reservados.
+
+Este es software propietario. Está prohibida su redistribución, venta o
+modificación sin la autorización previa y por escrito del propietario. Consulte
+el archivo `LICENSE.md` para conocer los términos completos de uso. Las
+bibliotecas de terceros incluidas conservan sus propias licencias (ver
+`THIRD_PARTY_NOTICES.md`).

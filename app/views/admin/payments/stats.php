@@ -29,7 +29,7 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h4 class="card-title"><?= formatCurrency($stats['total_ingresos']) ?></h4>
+                        <h4 class="card-title"><?= formatCurrencyDual($stats['total_ingresos']) ?></h4>
                         <p class="card-text">Total Ingresos</p>
                     </div>
                     <div class="align-self-center">
@@ -59,7 +59,7 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h4 class="card-title"><?= formatCurrency($stats['total_atrasado']) ?></h4>
+                        <h4 class="card-title"><?= formatCurrencyDual($stats['total_atrasado']) ?></h4>
                         <p class="card-text">Total Atrasado</p>
                     </div>
                     <div class="align-self-center">
@@ -117,9 +117,9 @@
                             <?php foreach($monthly_income as $income): ?>
                             <tr>
                                 <td><?= date('M Y', strtotime($income['mes'] . '-01')) ?></td>
-                                <td><?= formatCurrency($income['ingresos']) ?></td>
+                                <td><?= formatCurrencyDual($income['ingresos']) ?></td>
                                 <td><?= $income['cantidad_pagos'] ?></td>
-                                <td><?= formatCurrency($income['cantidad_pagos'] > 0 ? $income['ingresos'] / $income['cantidad_pagos'] : 0) ?></td>
+                                <td><?= formatCurrencyDual($income['cantidad_pagos'] > 0 ? $income['ingresos'] / $income['cantidad_pagos'] : 0) ?></td>
                             </tr>
                             <?php endforeach; ?>
                         </tbody>
@@ -154,7 +154,7 @@ const monthlyIncomeChart = new Chart(monthlyIncomeCtx, {
                 beginAtZero: true,
                 ticks: {
                     callback: function(value) {
-                        return '$' + value.toLocaleString();
+                        return '<?= currencySymbol() ?>' + value.toLocaleString();
                     }
                 }
             }

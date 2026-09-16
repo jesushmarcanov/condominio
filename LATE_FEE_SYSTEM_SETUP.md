@@ -2,7 +2,7 @@
 
 ## Descripción General
 
-El Sistema de Reglas de Mora es un módulo que automatiza el cálculo y gestión de recargos por pagos atrasados en ResiTech. Permite configurar reglas flexibles, calcular mora automáticamente mediante cron job, y proporcionar transparencia completa a residentes y administradores.
+El Sistema de Reglas de Mora es un módulo que automatiza el cálculo y gestión de recargos por pagos atrasados en CondoWeb. Permite configurar reglas flexibles, calcular mora automáticamente mediante cron job, y proporcionar transparencia completa a residentes y administradores.
 
 ## Características Principales
 
@@ -22,7 +22,7 @@ El Sistema de Reglas de Mora es un módulo que automatiza el cálculo y gestión
 - MySQL 5.7 o superior
 - Composer instalado
 - Acceso a cron jobs (para cálculo automático)
-- Sistema ResiTech base instalado y funcionando
+- Sistema CondoWeb base instalado y funcionando
 
 ## Instalación
 

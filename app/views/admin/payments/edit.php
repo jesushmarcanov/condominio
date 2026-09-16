@@ -41,6 +41,7 @@
                 </div>
 
                 <form method="POST" action="<?= APP_URL ?>/payments/edit/<?= $payment['id'] ?>" class="needs-validation" novalidate>
+                    <?= csrf_field() ?>
                     <div class="mb-3">
                         <label for="residente_id" class="form-label">Residente *</label>
                         <select class="form-select" id="residente_id" name="residente_id" required>
@@ -197,11 +198,12 @@
             </div>
             <div class="card-body">
                 <div class="alert alert-info">
-                    <strong>Mora Actual:</strong> $<?= number_format($payment['monto_mora'], 2) ?><br>
+                    <strong>Mora Actual:</strong> <?= formatAmountIn($payment['monto_mora'], $payment['moneda'] ?? baseCurrency()) ?><br>
                     <strong>Fecha de Aplicación:</strong> <?= isset($payment['fecha_aplicacion_mora']) ? date('d/m/Y', strtotime($payment['fecha_aplicacion_mora'])) : 'N/A' ?>
                 </div>
 
                 <form method="POST" action="<?= APP_URL ?>/payments/<?= $payment['id'] ?>/adjust-late-fee">
+                    <?= csrf_field() ?>
                     <div class="mb-3">
                         <label for="monto_mora" class="form-label">Nuevo Monto de Mora *</label>
                         <div class="input-group">
@@ -266,8 +268,8 @@
                                         echo $tipo_badges[$history['tipo_operacion']] ?? $history['tipo_operacion'];
                                         ?>
                                     </td>
-                                    <td>$<?= number_format($history['monto_calculado'], 2) ?></td>
-                                    <td>$<?= number_format($history['monto_aplicado'], 2) ?></td>
+                                    <td><?= formatAmountIn($history['monto_calculado'], $payment['moneda'] ?? baseCurrency()) ?></td>
+                                    <td><?= formatAmountIn($history['monto_aplicado'], $payment['moneda'] ?? baseCurrency()) ?></td>
                                     <td><?= $history['dias_atraso'] ?> días</td>
                                     <td><?= htmlspecialchars($history['usuario_nombre'] ?? 'Sistema') ?></td>
                                 </tr>

@@ -16,7 +16,7 @@
  * - Gestionar ajustes manuales
  * 
  * @package App\Services
- * @author Sistema de Gestión de Condominio
+ * @author Jesús H. Marcano V.
  * @version 1.0.0
  */
 
@@ -598,10 +598,11 @@ class LateFeeService {
             $titulo = "Recargo por Mora Aplicado - " . $payment_data['concepto'];
             $mensaje = "Estimado residente,\n\n";
             $mensaje .= "Se ha aplicado un recargo por mora a su pago:\n\n";
+            $ccy = $payment_data['moneda'] ?? baseCurrency();
             $mensaje .= "Concepto: " . $payment_data['concepto'] . "\n";
-            $mensaje .= "Monto original: $" . number_format($payment_data['monto_original'] ?? $payment_data['monto'], 2) . "\n";
-            $mensaje .= "Recargo por mora: $" . number_format($late_fee_amount, 2) . "\n";
-            $mensaje .= "Monto total: $" . number_format(($payment_data['monto_original'] ?? $payment_data['monto']) + $late_fee_amount, 2) . "\n";
+            $mensaje .= "Monto original: " . formatAmountIn($payment_data['monto_original'] ?? $payment_data['monto'], $ccy) . "\n";
+            $mensaje .= "Recargo por mora: " . formatAmountIn($late_fee_amount, $ccy) . "\n";
+            $mensaje .= "Monto total: " . formatAmountIn(($payment_data['monto_original'] ?? $payment_data['monto']) + $late_fee_amount, $ccy) . "\n";
             $mensaje .= "Fecha de vencimiento: " . $payment_data['fecha_pago'] . "\n\n";
             $mensaje .= "Por favor, regularice su situación a la brevedad.";
             

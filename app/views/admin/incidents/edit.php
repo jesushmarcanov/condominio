@@ -43,6 +43,7 @@
                 </div>
                 
                 <form method="POST" action="<?= APP_URL ?>/incidents/edit/<?= $incident['id'] ?>">
+                    <?= csrf_field() ?>
                     <div class="mb-3">
                         <label for="titulo" class="form-label">Título *</label>
                         <input type="text" class="form-control" id="titulo" name="titulo" 

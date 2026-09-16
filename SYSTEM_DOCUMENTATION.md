@@ -113,7 +113,7 @@ MAIL_PORT=587
 MAIL_USERNAME=jhmarcano@gmail.com
 MAIL_PASSWORD=<app-password>
 MAIL_FROM_ADDRESS=noreply@condoweb.com
-MAIL_FROM_NAME=ResiTech
+MAIL_FROM_NAME=CondoWeb
 MAIL_TEST_MODE=false
 
 # Configuración de Base de Datos (opcional, se usa database.php)
@@ -155,7 +155,7 @@ class Database {
 
 ```php
 // URL base de la aplicación
-define('APP_NAME', 'ResiTech');
+define('APP_NAME', 'CondoWeb');
 define('APP_VERSION', '1.2.0');
 define('APP_URL', 'http://localhost/condominio');
 

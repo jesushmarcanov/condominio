@@ -57,7 +57,7 @@
         <div class="card bg-success text-white">
             <div class="card-body">
                 <h5><i class="fas fa-dollar-sign"></i> Total Ingresos</h5>
-                <h3><?= formatCurrency($total) ?></h3>
+                <h3><?= formatCurrencyDual($total) ?></h3>
             </div>
         </div>
     </div>
@@ -73,7 +73,7 @@
         <div class="card bg-warning text-white">
             <div class="card-body">
                 <h5><i class="fas fa-chart-line"></i> Promedio</h5>
-                <h3><?= formatCurrency(count($payments) > 0 ? $total / count($payments) : 0) ?></h3>
+                <h3><?= formatCurrencyDual(count($payments) > 0 ? $total / count($payments) : 0) ?></h3>
             </div>
         </div>
     </div>
@@ -120,7 +120,7 @@
                                         <td><?= $payment['id'] ?></td>
                                         <td><?= htmlspecialchars($payment['residente_nombre']) ?></td>
                                         <td><?= htmlspecialchars($payment['apartamento']) ?></td>
-                                        <td class="fw-bold text-success"><?= formatCurrency($payment['monto']) ?></td>
+                                        <td class="fw-bold text-success"><?= formatCurrencyFrom($payment['monto'], $payment['moneda'] ?? baseCurrency()) ?></td>
                                         <td>
                                             <span class="badge bg-info">
                                                 <?= htmlspecialchars($payment['metodo_pago']) ?>
@@ -143,7 +143,7 @@
                             <tfoot class="table-dark">
                                 <tr>
                                     <th colspan="3">TOTAL</th>
-                                    <th class="fw-bold text-success"><?= formatCurrency($total) ?></th>
+                                    <th class="fw-bold text-success"><?= formatCurrencyDual($total) ?></th>
                                     <th colspan="4"><?= count($payments) ?> pagos</th>
                                 </tr>
                             </tfoot>

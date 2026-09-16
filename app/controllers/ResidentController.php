@@ -54,16 +54,7 @@ class ResidentController extends Controller {
     // Guardar nuevo residente
     private function storeResident() {
         $data = $this->getPostData();
-        $errors = $this->validate($data, [
-            'nombre' => ['required' => true, 'max' => 100],
-            'email' => ['required' => true, 'email' => true],
-            'password' => ['required' => true, 'min' => 6],
-            'apartamento' => ['required' => true, 'max' => 10],
-            'piso' => ['required' => true, 'numeric' => true],
-            'torre' => ['max' => 50],
-            'fecha_ingreso' => ['required' => true],
-            'estado' => ['required' => true, 'in' => getCatalogKeys(RESIDENT_STATUSES)]
-        ]);
+        $errors = $this->validateRules('resident.store', $data);
         
         if(!empty($errors)) {
             $this->view('admin/residents/create', [
@@ -190,8 +181,12 @@ class ResidentController extends Controller {
             'total_pagos' => count($payments),
             'pagos_pendientes' => count($pendientes),
             'total_incidencias' => count($incidents),
-            'total_pagado' => array_sum(array_column($pagados, 'monto')),
-            'total_pendiente' => array_sum(array_column($pendientes, 'monto')),
+            'total_pagado' => array_sum(array_map(function($p) {
+                return convertCurrency($p['monto'], $p['moneda'] ?? baseCurrency(), baseCurrency());
+            }, $pagados)),
+            'total_pendiente' => array_sum(array_map(function($p) {
+                return convertCurrency($p['monto'], $p['moneda'] ?? baseCurrency(), baseCurrency());
+            }, $pendientes)),
             'incidencias_resueltas' => count(array_filter($incidents, fn($i) => $i['estado'] === 'resuelta')),
             'incidencias_pendientes' => count(array_filter($incidents, fn($i) => in_array($i['estado'], ['abierto', 'en_proceso'])))
         ];
@@ -230,16 +225,7 @@ class ResidentController extends Controller {
     // Actualizar residente
     private function updateResident($id) {
         $data = $this->getPostData();
-        $errors = $this->validate($data, [
-            'nombre' => ['required' => true, 'max' => 100],
-            'email' => ['required' => true, 'email' => true, 'max' => 100],
-            'telefono' => ['max' => 20],
-            'apartamento' => ['required' => true, 'max' => 10],
-            'piso' => ['required' => true, 'numeric' => true],
-            'torre' => ['max' => 50],
-            'fecha_ingreso' => ['required' => true],
-            'estado' => ['required' => true, 'in' => getCatalogKeys(RESIDENT_STATUSES)]
-        ]);
+        $errors = $this->validateRules('resident.update', $data);
         
         if(!empty($errors)) {
             // Obtener datos actuales del residente para mostrar en el formulario
@@ -351,9 +337,49 @@ class ResidentController extends Controller {
         if($_SERVER['REQUEST_METHOD'] === 'POST') {
             $this->updateMyProfile($resident_data['id']);
         } else {
+            $payment = new Payment($this->db);
+            $payments = $payment->readByResident($resident_data['id'])->fetchAll(PDO::FETCH_ASSOC);
+
+            $incident = new Incident($this->db);
+            $incidents = $incident->readByResident($resident_data['id'])->fetchAll(PDO::FETCH_ASSOC);
+
+            $pagados = array_filter($payments, fn($p) => $p['estado'] === 'pagado');
+            $pendientes = array_filter($payments, fn($p) => in_array($p['estado'], ['pendiente', 'atrasado']));
+
+            $stats = [
+                'pagos_realizados' => count($pagados),
+                'pagos_pendientes' => count($pendientes),
+                'incidencias_pendientes' => count(array_filter($incidents, fn($i) => $i['estado'] === 'pendiente')),
+                'incidencias_en_proceso' => count(array_filter($incidents, fn($i) => $i['estado'] === 'en_proceso')),
+                'incidencias_resueltas' => count(array_filter($incidents, fn($i) => $i['estado'] === 'resuelta')),
+            ];
+
+            $recent_activity = [];
+            foreach(array_slice($payments, 0, 5) as $pago) {
+                $recent_activity[] = [
+                    'type' => 'payment',
+                    'title' => 'Pago Registrado',
+                    'description' => "Pago de {$pago['concepto']} por " . formatCurrency($pago['monto']),
+                    'date' => $pago['fecha_pago'],
+                    'marker' => 'bg-success'
+                ];
+            }
+            foreach(array_slice($incidents, 0, 5) as $inc) {
+                $recent_activity[] = [
+                    'type' => 'incident',
+                    'title' => 'Incidencia Reportada',
+                    'description' => $inc['titulo'],
+                    'date' => $inc['fecha_reporte'],
+                    'marker' => 'bg-warning'
+                ];
+            }
+            usort($recent_activity, fn($a, $b) => strtotime($b['date']) - strtotime($a['date']));
+
             $this->view('resident/profile', [
                 'user' => $current_user,
-                'resident' => $resident_data
+                'resident' => $resident_data,
+                'stats' => $stats,
+                'recent_activity' => $recent_activity
             ]);
         }
     }
@@ -363,11 +389,7 @@ class ResidentController extends Controller {
         $current_user = $this->getCurrentUser();
         
         $data = $this->getPostData();
-        $errors = $this->validate($data, [
-            'nombre' => ['required' => true, 'max' => 100],
-            'email' => ['required' => true, 'email' => true, 'max' => 100],
-            'telefono' => ['max' => 20]
-        ]);
+        $errors = $this->validateRules('resident.profile', $data);
         
         if(!empty($errors)) {
             $this->resident->id = $resident_id;

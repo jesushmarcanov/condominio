@@ -13,7 +13,7 @@
  * - eliminacion: Eliminación de mora previamente aplicada
  * 
  * @package App\Models
- * @author Sistema de Gestión de Condominio
+ * @author Jesús H. Marcano V.
  * @version 1.0.0
  */
 

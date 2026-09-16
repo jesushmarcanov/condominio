@@ -93,13 +93,7 @@ class IncidentController extends Controller {
     // Guardar nueva incidencia
     private function storeIncident() {
         $data = $this->getPostData();
-        $errors = $this->validate($data, [
-            'residente_id' => ['required' => true, 'numeric' => true],
-            'titulo' => ['required' => true, 'max' => 100],
-            'descripcion' => ['required' => true],
-            'categoria' => ['required' => true, 'in' => getCatalogKeys(INCIDENT_CATEGORIES)],
-            'prioridad' => ['required' => true, 'in' => getCatalogKeys(INCIDENT_PRIORITIES)]
-        ]);
+        $errors = $this->validateRules('incident.store', $data);
         
         if(!empty($errors)) {
             if(isAdmin()) {
@@ -224,13 +218,7 @@ class IncidentController extends Controller {
     // Actualizar incidencia
     private function updateIncident($id) {
         $data = $this->getPostData();
-        $errors = $this->validate($data, [
-            'titulo' => ['required' => true, 'max' => 100],
-            'descripcion' => ['required' => true],
-            'categoria' => ['required' => true, 'in' => getCatalogKeys(INCIDENT_CATEGORIES)],
-            'prioridad' => ['required' => true, 'in' => getCatalogKeys(INCIDENT_PRIORITIES)],
-            'estado' => ['required' => true, 'in' => getCatalogKeys(INCIDENT_STATUSES)]
-        ]);
+        $errors = $this->validateRules('incident.update', $data);
         
         if(!empty($errors)) {
             $this->view('admin/incidents/edit', [
