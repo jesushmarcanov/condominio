@@ -19,11 +19,11 @@
     <div class="wrapper">
         <!-- Sidebar -->
         <nav id="sidebar" class="sidebar">
-            <div class="sidebar-header" id="sidebarHeader" role="button" tabindex="0"
-                 aria-label="Contraer o expandir menú" title="Contraer / Expandir menú">
-                <h3><i class="fas fa-building"></i> <span class="sidebar-app-name"><?= APP_NAME ?></span></h3>
-                <p><?= isAdmin() ? 'Panel de Administración' : 'Panel de Residente' ?></p>
-                <i class="fas fa-angle-left sidebar-toggle-icon"></i>
+            <div class="sidebar-header">
+                <a href="<?= APP_URL ?>/dashboard" class="sidebar-brand-link" title="Ir al Dashboard">
+                    <h3><i class="fas fa-building"></i> <span class="sidebar-app-name"><?= APP_NAME ?></span></h3>
+                    <p><?= isAdmin() ? 'Panel de Administración' : 'Panel de Residente' ?></p>
+                </a>
             </div>
 
             <ul class="list-unstyled components">

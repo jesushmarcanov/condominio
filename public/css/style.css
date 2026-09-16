@@ -356,6 +356,17 @@ body.sidebar-mini footer {
     background: rgba(0, 0, 0, 0.3);
 }
 
+.sidebar-brand-link {
+    display: block;
+    color: #fff;
+    text-decoration: none;
+}
+
+.sidebar-brand-link:hover h3,
+.sidebar-brand-link:hover p {
+    color: #fff;
+}
+
 .sidebar-toggle-icon {
     position: absolute;
     right: 15px;

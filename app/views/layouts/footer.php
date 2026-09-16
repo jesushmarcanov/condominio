@@ -34,16 +34,23 @@
             const sidebarCollapse = document.getElementById('sidebarCollapse');
             const sidebar = document.getElementById('sidebar');
             const content = document.getElementById('content');
-            const sidebarHeader = document.getElementById('sidebarHeader');
             
             if (sidebarCollapse) {
                 sidebarCollapse.addEventListener('click', function() {
-                    sidebar.classList.toggle('active');
-                    content.classList.toggle('active');
+                    if (window.innerWidth <= 768) {
+                        // Móvil: mantener comportamiento off-canvas actual
+                        sidebar.classList.toggle('active');
+                        content.classList.toggle('active');
+                    } else {
+                        // Escritorio: modo mini, mostrar solo iconos (app + cada opción de menú)
+                        toggleMiniSidebar();
+                    }
                 });
             }
 
-            // Alternar modo mini (solo iconos) al hacer clic en el logo/nombre
+            // Alternar modo mini (solo iconos): el botón de colapso despliega el
+            // icono de la aplicación y los iconos de cada opción del menú.
+            // (El nombre de la app ya no contrae la barra: ahora es un enlace al dashboard)
             function toggleMiniSidebar(force) {
                 if (window.innerWidth <= 768) {
                     return; // en móvil se mantiene el comportamiento actual
@@ -56,17 +63,6 @@
                 content.classList.toggle('mini', isMini);
             }
 
-            if (sidebarHeader) {
-                sidebarHeader.addEventListener('click', function() {
-                    toggleMiniSidebar();
-                });
-                sidebarHeader.addEventListener('keydown', function(e) {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        toggleMiniSidebar();
-                    }
-                });
-            }
             
             // Cerrar sidebar en móvil al hacer clic en un enlace
             if (window.innerWidth <= 768) {
