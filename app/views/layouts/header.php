@@ -163,9 +163,21 @@
                 <?php if(isAdmin()): ?>
                 <!-- Configuración (Solo Admin) -->
                 <li>
-                    <a href="<?= APP_URL ?>/settings">
+                    <a href="#settingsMenu" data-bs-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
                         <i class="fas fa-cogs"></i> Configuración
                     </a>
+                    <ul class="collapse list-unstyled" id="settingsMenu">
+                        <li>
+                            <a href="<?= APP_URL ?>/empresa">
+                                <i class="fas fa-building"></i> Datos de Empresa
+                            </a>
+                        </li>
+                        <li>
+                            <a href="<?= APP_URL ?>/settings">
+                                <i class="fas fa-dollar-sign"></i> Tasa de cambio
+                            </a>
+                        </li>
+                    </ul>
                 </li>
                 <?php endif; ?>
 

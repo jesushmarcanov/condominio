@@ -51,6 +51,7 @@ require_once APP_PATH . '/models/IncidentEvent.php';
 require_once APP_PATH . '/models/BankAccount.php';
 require_once APP_PATH . '/models/PaymentDeclaration.php';
 require_once APP_PATH . '/models/AppSetting.php';
+require_once APP_PATH . '/models/Empresa.php';
 
 // Cargar modelos de mora si existen
 if (file_exists(APP_PATH . '/models/LateFeeRule.php')) {
@@ -93,6 +94,7 @@ require_once APP_PATH . '/controllers/ReportController.php';
 require_once APP_PATH . '/controllers/NotificationController.php';
 require_once APP_PATH . '/controllers/PdfController.php';
 require_once APP_PATH . '/controllers/ExcelController.php';
+require_once APP_PATH . '/controllers/CompanyController.php';
 
 // Cargar controlador de mora si existe
 if (file_exists(APP_PATH . '/controllers/LateFeeController.php')) {
@@ -623,6 +625,16 @@ switch ($request_path) {
         } else {
             http_response_code(404);
             include APP_PATH . '/views/404.php';
+        }
+        break;
+        
+    // Datos del Condominio (Empresa) — Admin only
+    case '/empresa':
+        $controller = new CompanyController();
+        if ($method === 'GET') {
+            $controller->index();
+        } elseif ($method === 'POST') {
+            $controller->update();
         }
         break;
         
