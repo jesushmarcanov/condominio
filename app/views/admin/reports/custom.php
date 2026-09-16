@@ -33,6 +33,7 @@
                 <?php endif; ?>
 
                 <form method="POST" action="<?= APP_URL ?>/reports/custom">
+                    <?= csrf_field() ?>
                     <div class="row">
                         <div class="col-md-6">
                             <label for="report_type" class="form-label">Tipo de Reporte</label>

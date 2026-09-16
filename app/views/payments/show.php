@@ -36,7 +36,7 @@
                     <div class="col-md-6">
                         <p><strong>Concepto:</strong> <?= $payment['concepto'] ?></p>
                         <p><strong>Monto:</strong> 
-                            <span class="badge bg-success fs-6"><?= formatCurrency($payment['monto']) ?></span>
+                            <span class="badge bg-success fs-6"><?= formatCurrencyFrom($payment['monto'], $payment['moneda'] ?? baseCurrency()) ?></span>
                         </p>
                         <p><strong>Mes de Pago:</strong> <?= date('F Y', strtotime($payment['mes_pago'])) ?></p>
                         <p><strong>Estado:</strong> 
@@ -87,15 +87,15 @@
                 <table class="table table-bordered">
                     <tr>
                         <td><strong>Monto Original:</strong></td>
-                        <td class="text-end">$<?= number_format($payment['monto_original'] ?? $payment['monto'], 2) ?></td>
+                        <td class="text-end"><?= formatCurrencyFrom($payment['monto_original'] ?? $payment['monto'], $payment['moneda'] ?? baseCurrency()) ?></td>
                     </tr>
                     <tr class="table-warning">
                         <td><strong>Recargo por Mora:</strong></td>
-                        <td class="text-end text-danger">+$<?= number_format($payment['monto_mora'], 2) ?></td>
+                        <td class="text-end text-danger">+<?= formatCurrencyFrom($payment['monto_mora'], $payment['moneda'] ?? baseCurrency()) ?></td>
                     </tr>
                     <tr class="table-success">
                         <td><strong>Monto Total a Pagar:</strong></td>
-                        <td class="text-end"><strong>$<?= number_format(($payment['monto_original'] ?? $payment['monto']) + $payment['monto_mora'], 2) ?></strong></td>
+                        <td class="text-end"><strong><?= formatCurrencyFrom(($payment['monto_original'] ?? $payment['monto']) + $payment['monto_mora'], $payment['moneda'] ?? baseCurrency()) ?></strong></td>
                     </tr>
                 </table>
 
@@ -260,7 +260,7 @@
                         <div class="timeline-marker bg-primary"></div>
                         <div class="timeline-content">
                             <h6>Pago Registrado</h6>
-                            <p class="text-muted">Se registró el pago por <?= formatCurrency($payment['monto']) ?></p>
+                            <p class="text-muted">Se registró el pago por <?= formatCurrencyFrom($payment['monto'], $payment['moneda'] ?? baseCurrency()) ?></p>
                             <small class="text-muted"><?= formatDate($payment['created_at']) ?></small>
                         </div>
                     </div>

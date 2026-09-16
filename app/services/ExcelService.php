@@ -9,6 +9,13 @@ use PhpOffice\PhpSpreadsheet\Style\Border;
 
 class ExcelService {
     
+    /**
+     * Código de formato numérico de Excel según la moneda base configurada
+     */
+    private function currencyFormatCode() {
+        return baseCurrency() === 'VES' ? '"Bs "#,##0.00' : '$#,##0.00';
+    }
+    
     public function generateIncomeReport($payments, $start_date, $end_date, $total) {
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
@@ -52,8 +59,8 @@ class ExcelService {
             $sheet->setCellValue('D' . $row, $payment['descripcion'] ?? $payment['concepto'] ?? 'N/A');
             $sheet->setCellValue('E' . $row, date('d/m/Y', strtotime($payment['fecha_pago'])));
             $sheet->setCellValue('F' . $row, ucfirst($payment['metodo_pago']));
-            $sheet->setCellValue('G' . $row, $payment['monto']);
-            $sheet->getStyle('G' . $row)->getNumberFormat()->setFormatCode('$#,##0.00');
+            $sheet->setCellValue('G' . $row, $payment['monto'] !== null ? convertCurrency($payment['monto'], $payment['moneda'] ?? baseCurrency(), baseCurrency()) : 0);
+            $sheet->getStyle('G' . $row)->getNumberFormat()->setFormatCode($this->currencyFormatCode());
             $row++;
         }
         
@@ -62,7 +69,7 @@ class ExcelService {
         $sheet->getStyle('F' . $row)->getFont()->setBold(true);
         $sheet->setCellValue('G' . $row, $total);
         $sheet->getStyle('G' . $row)->getFont()->setBold(true);
-        $sheet->getStyle('G' . $row)->getNumberFormat()->setFormatCode('$#,##0.00');
+        $sheet->getStyle('G' . $row)->getNumberFormat()->setFormatCode($this->currencyFormatCode());
         
         // Ajustar anchos
         foreach (range('A', 'G') as $col) {
@@ -114,8 +121,8 @@ class ExcelService {
             $sheet->setCellValue('E' . $row, $payment['mes_pago']);
             $sheet->setCellValue('F' . $row, date('d/m/Y', strtotime($payment['fecha_vencimiento'])));
             $sheet->setCellValue('G' . $row, ucfirst($payment['estado']));
-            $sheet->setCellValue('H' . $row, $payment['monto']);
-            $sheet->getStyle('H' . $row)->getNumberFormat()->setFormatCode('$#,##0.00');
+            $sheet->setCellValue('H' . $row, $payment['monto'] !== null ? convertCurrency($payment['monto'], $payment['moneda'] ?? baseCurrency(), baseCurrency()) : 0);
+            $sheet->getStyle('H' . $row)->getNumberFormat()->setFormatCode($this->currencyFormatCode());
             
             // Color según estado
             if ($payment['estado'] === 'atrasado') {
@@ -131,7 +138,7 @@ class ExcelService {
         $sheet->getStyle('G' . $row)->getFont()->setBold(true);
         $sheet->setCellValue('H' . $row, $total);
         $sheet->getStyle('H' . $row)->getFont()->setBold(true);
-        $sheet->getStyle('H' . $row)->getNumberFormat()->setFormatCode('$#,##0.00');
+        $sheet->getStyle('H' . $row)->getNumberFormat()->setFormatCode($this->currencyFormatCode());
         
         // Ajustar anchos
         foreach (range('A', 'H') as $col) {

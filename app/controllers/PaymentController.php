@@ -7,12 +7,18 @@ class PaymentController extends Controller {
     private $emailService;
     private $lateFeeService;
     private $lateFeeHistory;
+    private $bankAccount;
+    private $paymentDeclaration;
+    private $paymentNotificationService;
     
     public function __construct() {
         parent::__construct();
         $this->payment = new Payment($this->db);
         $this->resident = new Resident($this->db);
         $this->emailService = new EmailService($this->db);
+        $this->bankAccount = new BankAccount($this->db);
+        $this->paymentDeclaration = new PaymentDeclaration($this->db);
+        $this->paymentNotificationService = new PaymentNotificationService($this->db);
         
         // Cargar modelos y servicios de mora si existen
         if (file_exists(APP_PATH . '/models/LateFeeRule.php')) {
@@ -87,16 +93,7 @@ class PaymentController extends Controller {
     // Guardar nuevo pago
     private function storePayment() {
         $data = $this->getPostData();
-        $errors = $this->validate($data, [
-            'residente_id' => ['required' => true, 'numeric' => true],
-            'monto' => ['required' => true, 'numeric' => true],
-            'concepto' => ['required' => true, 'max' => 100],
-            'mes_pago' => ['required' => true],
-            'fecha_pago' => ['required' => true],
-            'metodo_pago' => ['required' => true, 'in' => getCatalogKeys(PAYMENT_METHODS)],
-            'referencia' => ['max' => 100],
-            'estado' => ['required' => true, 'in' => getCatalogKeys(PAYMENT_STATUSES)]
-        ]);
+        $errors = $this->validateRules('payment.store', $data);
         
         if(!empty($errors)) {
             $residents = $this->resident->getActiveResidents()->fetchAll(PDO::FETCH_ASSOC);
@@ -131,12 +128,20 @@ class PaymentController extends Controller {
         $this->payment->metodo_pago = $data['metodo_pago'];
         $this->payment->referencia = $data['referencia'];
         $this->payment->estado = $data['estado'];
+        $this->payment->moneda = baseCurrency();
+        $this->payment->monto_moneda_original = null;
         
         if($this->payment->create()) {
             // Send payment confirmation email
             // $this->sendPaymentConfirmationEmail($data['residente_id'], $this->payment->id);
             
             flash('Pago registrado correctamente', 'success');
+            
+            if(isset($_POST['save_and_print'])) {
+                redirect('/payments?print=' . $this->payment->id);
+                return;
+            }
+            
             redirect('/payments');
         } else {
             $residents = $this->resident->getActiveResidents()->fetchAll(PDO::FETCH_ASSOC);
@@ -178,6 +183,44 @@ class PaymentController extends Controller {
         ]);
     }
     
+    // Ver e imprimir recibo de pago
+    public function receipt($id) {
+        $this->requireAuth();
+        
+        $this->payment->id = $id;
+        $payment_data = $this->payment->readOne();
+        
+        if(!$payment_data) {
+            flash('Pago no encontrado', 'error');
+            redirect('/payments');
+            return;
+        }
+        
+        // Verificar permisos
+        if(isResident()) {
+            $current_user = $this->getCurrentUser();
+            $resident_data = $this->resident->getByUserId($current_user['id']);
+            if(!$resident_data || $resident_data['id'] != $payment_data['residente_id']) {
+                flash('No tiene permisos para ver este recibo', 'error');
+                redirect('/payments');
+                return;
+            }
+        }
+        
+        if(isset($_GET['embed'])) {
+            $this->view('payments/receipt_embed', [
+                'payment' => $payment_data,
+                'is_admin' => isAdmin()
+            ]);
+            return;
+        }
+        
+        $this->view('payments/receipt', [
+            'payment' => $payment_data,
+            'is_admin' => isAdmin()
+        ]);
+    }
+    
     // Editar pago (solo admin)
     public function edit($id) {
         $this->requireAdmin();
@@ -214,16 +257,7 @@ class PaymentController extends Controller {
     // Actualizar pago
     private function updatePayment($id) {
         $data = $this->getPostData();
-        $errors = $this->validate($data, [
-            'residente_id' => ['required' => true, 'numeric' => true],
-            'monto' => ['required' => true, 'numeric' => true],
-            'concepto' => ['required' => true, 'max' => 100],
-            'mes_pago' => ['required' => true],
-            'fecha_pago' => ['required' => true],
-            'metodo_pago' => ['required' => true, 'in' => getCatalogKeys(PAYMENT_METHODS)],
-            'referencia' => ['max' => 100],
-            'estado' => ['required' => true, 'in' => getCatalogKeys(PAYMENT_STATUSES)]
-        ]);
+        $errors = $this->validateRules('payment.update', $data);
         
         if(!empty($errors)) {
             $residents = $this->resident->getActiveResidents()->fetchAll(PDO::FETCH_ASSOC);
@@ -357,10 +391,7 @@ class PaymentController extends Controller {
         $data = $this->getPostData();
         
         // Validar datos
-        $errors = $this->validate($data, [
-            'monto_mora' => ['required' => true, 'numeric' => true, 'min' => 0],
-            'justificacion' => ['required' => true, 'min' => 10, 'max' => 500]
-        ]);
+        $errors = $this->validateRules('payment.late_fee_adjust', $data);
         
         if (!empty($errors)) {
             flash('Error en la validación: ' . implode(', ', $errors), 'error');
@@ -403,6 +434,432 @@ class PaymentController extends Controller {
         }
         
         redirect('/payments/edit/' . $id);
+    }
+
+    // ------------------------------------------------------------------
+    // Pagos en Línea (Pago Móvil BCV + Transferencia Bancaria)
+    // ------------------------------------------------------------------
+
+    /**
+     * Mostrar la pantalla de pago en línea para un pago
+     * GET /payments/pay/:id
+     */
+    public function pay($id) {
+        $this->requireAuth();
+
+        $this->payment->id = $id;
+        $payment_data = $this->payment->readOne();
+
+        if (!$payment_data) {
+            flash('Pago no encontrado', 'error');
+            redirect('/payments');
+            return;
+        }
+
+        // Verificar permisos (residente dueño del pago o admin)
+        if (isResident()) {
+            $current_user = $this->getCurrentUser();
+            $resident_data = $this->resident->getByUserId($current_user['id']);
+            if (!$resident_data || $resident_data['id'] != $payment_data['residente_id']) {
+                flash('No tiene permisos para pagar este pago', 'error');
+                redirect('/payments');
+                return;
+            }
+        }
+
+        // No permitir pagar un pago ya pagado
+        if ($payment_data['estado'] === 'pagado') {
+            flash('Este pago ya ha sido pagado', 'info');
+            redirect('/payments/show/' . $id);
+            return;
+        }
+
+        // Obtener cuentas bancarias activas
+        $bank_accounts = $this->bankAccount->getActive()->fetchAll(PDO::FETCH_ASSOC);
+
+        // Obtener historial de declaraciones del pago
+        $declarations = $this->paymentDeclaration->getByPayment($id)->fetchAll(PDO::FETCH_ASSOC);
+
+        // Si no hay cuentas activas, advertir
+        if (empty($bank_accounts)) {
+            flash('La administración aún no ha configurado cuentas bancarias para recibir pagos en línea', 'warning');
+        }
+
+        $this->view('payments/pay', [
+            'payment' => $payment_data,
+            'bank_accounts' => $bank_accounts,
+            'declarations' => $declarations,
+            'is_admin' => isAdmin()
+        ]);
+    }
+
+    /**
+     * Registrar una declaración de pago en línea
+     * POST /payments/declare/:id
+     */
+    public function declarePayment($id) {
+        $this->requireAuth();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            flash('Método no permitido', 'error');
+            redirect('/payments/pay/' . $id);
+            return;
+        }
+
+        $this->payment->id = $id;
+        $payment_data = $this->payment->readOne();
+
+        if (!$payment_data) {
+            flash('Pago no encontrado', 'error');
+            redirect('/payments');
+            return;
+        }
+
+        // No permitir declarar sobre un pago pagado
+        if ($payment_data['estado'] === 'pagado') {
+            flash('Este pago ya ha sido pagado', 'info');
+            redirect('/payments/show/' . $id);
+            return;
+        }
+
+        // Verificar permisos (residente dueño del pago o admin)
+        if (isResident()) {
+            $current_user = $this->getCurrentUser();
+            $resident_data = $this->resident->getByUserId($current_user['id']);
+            if (!$resident_data || $resident_data['id'] != $payment_data['residente_id']) {
+                flash('No tiene permisos para declarar este pago', 'error');
+                redirect('/payments');
+                return;
+            }
+        }
+
+        // Validar datos
+        $data = $this->getPostData();
+        $errors = $this->validateRules('payment.declare', $data);
+
+        if (!empty($errors)) {
+            flash('Error en la validación: ' . implode(', ', $errors), 'error');
+            redirect('/payments/pay/' . $id);
+            return;
+        }
+
+        // Obtener usuario actual
+        $user_id = $_SESSION['user_id'] ?? null;
+
+        // Crear declaración
+        $this->paymentDeclaration->pago_id = $id;
+        $this->paymentDeclaration->metodo = $data['metodo'];
+        $this->paymentDeclaration->banco_origen = $data['banco_origen'];
+        $this->paymentDeclaration->referencia_bancaria = $data['referencia_bancaria'];
+        $this->paymentDeclaration->monto_declarado = $data['monto_declarado'];
+        $this->paymentDeclaration->fecha_operacion = $data['fecha_operacion'];
+        $this->paymentDeclaration->hora_operacion = $data['hora_operacion'];
+        $this->paymentDeclaration->moneda = $data['moneda'];
+        $this->paymentDeclaration->monto_moneda_original = $data['monto_declarado'];
+        $this->paymentDeclaration->estado = 'pendiente';
+        $this->paymentDeclaration->declarado_por = $user_id;
+
+        if (!$this->paymentDeclaration->create()) {
+            flash('Error al registrar la declaración de pago', 'error');
+            redirect('/payments/pay/' . $id);
+            return;
+        }
+
+        error_log("[PaymentController] Declaración de pago creada - ID: " . $this->paymentDeclaration->id . ", Pago ID: $id, Usuario: $user_id");
+
+        // Notificar a administradores (email + in-app)
+        $declaration_full = array_merge(
+            $this->paymentDeclaration->readOne(),
+            $payment_data
+        );
+        $this->paymentNotificationService->notifyAdminsDeclaration($declaration_full);
+
+        flash('Declaración de pago registrada. La administración la verificará y confirmará. Le avisaremos por email.', 'success');
+        redirect('/payments/show/' . $id);
+    }
+
+    /**
+     * Listar declaraciones de pago (solo admin)
+     * GET /payments/declarations
+     */
+    public function declarations() {
+        $this->requireAdmin();
+
+        $status = isset($_GET['status']) ? sanitize($_GET['status']) : '';
+
+        $declarations_stmt = $this->paymentDeclaration->readAll();
+        $all_declarations = $declarations_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Aplicar filtro de estado
+        if (!empty($status)) {
+            $all_declarations = array_filter($all_declarations, function ($d) use ($status) {
+                return $d['estado'] === $status;
+            });
+        }
+
+        $stats = $this->paymentDeclaration->getStats();
+
+        $this->view('admin/payments/declarations', [
+            'declarations' => $all_declarations,
+            'stats' => $stats,
+            'status' => $status
+        ]);
+    }
+
+    /**
+     * Confirmar una declaración de pago (solo admin)
+     * POST /payments/declarations/confirm/:id
+     */
+    public function confirmDeclaration($id) {
+        $this->requireAdmin();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            flash('Método no permitido', 'error');
+            redirect('/payments/declarations');
+            return;
+        }
+
+        $this->paymentDeclaration->id = $id;
+        $declaration = $this->paymentDeclaration->readOne();
+
+        if (!$declaration) {
+            flash('Declaración no encontrada', 'error');
+            redirect('/payments/declarations');
+            return;
+        }
+
+        if ($declaration['estado'] !== 'pendiente') {
+            flash('Esta declaración ya fue procesada', 'error');
+            redirect('/payments/declarations');
+            return;
+        }
+
+        $data = $this->getPostData();
+        $notas = !empty($data['notas_admin']) ? $data['notas_admin'] : null;
+
+        // Confirmar declaración
+        if (!$this->paymentDeclaration->confirm($_SESSION['user_id'], $notas)) {
+            flash('Error al confirmar la declaración', 'error');
+            redirect('/payments/declarations');
+            return;
+        }
+
+        // Marcar el pago como pagado
+        $this->payment->id = $declaration['pago_id'];
+        $payment_data = $this->payment->readOne();
+
+        if ($payment_data) {
+            $this->payment->residente_id = $payment_data['residente_id'];
+            $this->payment->monto = $payment_data['monto'];
+            $this->payment->concepto = $payment_data['concepto'];
+            $this->payment->mes_pago = $payment_data['mes_pago'];
+            $this->payment->fecha_pago = $payment_data['fecha_pago'];
+            $this->payment->metodo_pago = $declaration['metodo'];
+            $this->payment->referencia = $declaration['referencia_bancaria'];
+            $this->payment->estado = 'pagado';
+            $this->payment->moneda = $declaration['moneda'] ?: 'USD';
+            $this->payment->monto_moneda_original = $declaration['monto_moneda_original'];
+            $this->payment->monto_original = $payment_data['monto_original'] ?? $payment_data['monto'];
+            $this->payment->monto_mora = $payment_data['monto_mora'] ?? 0;
+            $this->payment->fecha_aplicacion_mora = $payment_data['fecha_aplicacion_mora'] ?? null;
+            $this->payment->regla_mora_id = $payment_data['regla_mora_id'] ?? null;
+            $this->payment->update();
+
+            error_log("[PaymentController] Pago marcado como pagado por declaración - Pago ID: " . $declaration['pago_id'] . ", Declaración ID: $id");
+        }
+
+        // Obtener datos del residente para notificar
+        $resident_data = $this->resident->getByUserId($declaration['usuario_id']);
+        if ($resident_data) {
+            $this->paymentNotificationService->notifyResidentStatusChange($resident_data, $declaration, 'confirmada', $notas);
+        }
+
+        flash('Declaración confirmada y pago marcado como pagado', 'success');
+        redirect('/payments/declarations');
+    }
+
+    /**
+     * Rechazar una declaración de pago (solo admin)
+     * POST /payments/declarations/reject/:id
+     */
+    public function rejectDeclaration($id) {
+        $this->requireAdmin();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            flash('Método no permitido', 'error');
+            redirect('/payments/declarations');
+            return;
+        }
+
+        $this->paymentDeclaration->id = $id;
+        $declaration = $this->paymentDeclaration->readOne();
+
+        if (!$declaration) {
+            flash('Declaración no encontrada', 'error');
+            redirect('/payments/declarations');
+            return;
+        }
+
+        if ($declaration['estado'] !== 'pendiente') {
+            flash('Esta declaración ya fue procesada', 'error');
+            redirect('/payments/declarations');
+            return;
+        }
+
+        $data = $this->getPostData();
+        $notas = !empty($data['notas_admin']) ? $data['notas_admin'] : null;
+
+        if (empty($notas)) {
+            flash('Debe indicar el motivo del rechazo', 'error');
+            redirect('/payments/declarations');
+            return;
+        }
+
+        // Rechazar declaración
+        if (!$this->paymentDeclaration->reject($_SESSION['user_id'], $notas)) {
+            flash('Error al rechazar la declaración', 'error');
+            redirect('/payments/declarations');
+            return;
+        }
+
+        // Notificar al residente
+        $resident_data = $this->resident->getByUserId($declaration['usuario_id']);
+        if ($resident_data) {
+            $this->paymentNotificationService->notifyResidentStatusChange($resident_data, $declaration, 'rechazada', $notas);
+        }
+
+        flash('Declaración rechazada. Se notificó al residente.', 'success');
+        redirect('/payments/declarations');
+    }
+
+    // ------------------------------------------------------------------
+    // Cuentas Bancarias (solo admin)
+    // ------------------------------------------------------------------
+
+    /**
+     * Listar cuentas bancarias (solo admin)
+     * GET /bank-accounts
+     */
+    public function bankAccounts() {
+        $this->requireAdmin();
+
+        $accounts = $this->bankAccount->readAll()->fetchAll(PDO::FETCH_ASSOC);
+
+        $this->view('admin/bank_accounts/index', [
+            'accounts' => $accounts
+        ]);
+    }
+
+    /**
+     * Crear cuenta bancaria (solo admin)
+     * GET/POST /bank-accounts/create
+     */
+    public function bankAccountCreate() {
+        $this->requireAdmin();
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $data = $this->getPostData();
+            $errors = $this->validateRules('bank_account.store', $data);
+
+            if (!empty($errors)) {
+                $this->view('admin/bank_accounts/create', [
+                    'errors' => $errors,
+                    'data' => $data
+                ]);
+                return;
+            }
+
+            $this->bankAccount->banco = $data['banco'];
+            $this->bankAccount->tipo = $data['tipo'];
+            $this->bankAccount->numero_cuenta = $data['numero_cuenta'];
+            $this->bankAccount->titular = $data['titular'];
+            $this->bankAccount->pago_movil_telefono = $data['pago_movil_telefono'] ?? '';
+            $this->bankAccount->pago_movil_cedula = $data['pago_movil_cedula'] ?? '';
+            $this->bankAccount->activa = isset($data['activa']) ? true : false;
+
+            if ($this->bankAccount->create()) {
+                flash('Cuenta bancaria registrada correctamente', 'success');
+                redirect('/bank-accounts');
+            } else {
+                $this->view('admin/bank_accounts/create', [
+                    'error' => 'Error al registrar la cuenta bancaria',
+                    'data' => $data
+                ]);
+            }
+            return;
+        }
+
+        $this->view('admin/bank_accounts/create');
+    }
+
+    /**
+     * Editar cuenta bancaria (solo admin)
+     * GET/POST /bank-accounts/edit/:id
+     */
+    public function bankAccountEdit($id) {
+        $this->requireAdmin();
+
+        $this->bankAccount->id = $id;
+        $account = $this->bankAccount->readOne();
+
+        if (!$account) {
+            flash('Cuenta bancaria no encontrada', 'error');
+            redirect('/bank-accounts');
+            return;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $data = $this->getPostData();
+            $errors = $this->validateRules('bank_account.update', $data);
+
+            if (!empty($errors)) {
+                $this->view('admin/bank_accounts/edit', [
+                    'errors' => $errors,
+                    'account' => array_merge($account, $data)
+                ]);
+                return;
+            }
+
+            $this->bankAccount->banco = $data['banco'];
+            $this->bankAccount->tipo = $data['tipo'];
+            $this->bankAccount->numero_cuenta = $data['numero_cuenta'];
+            $this->bankAccount->titular = $data['titular'];
+            $this->bankAccount->pago_movil_telefono = $data['pago_movil_telefono'] ?? '';
+            $this->bankAccount->pago_movil_cedula = $data['pago_movil_cedula'] ?? '';
+            $this->bankAccount->activa = isset($data['activa']) ? true : false;
+
+            if ($this->bankAccount->update()) {
+                flash('Cuenta bancaria actualizada correctamente', 'success');
+                redirect('/bank-accounts');
+            } else {
+                $this->view('admin/bank_accounts/edit', [
+                    'error' => 'Error al actualizar la cuenta bancaria',
+                    'account' => array_merge($account, $data)
+                ]);
+            }
+            return;
+        }
+
+        $this->view('admin/bank_accounts/edit', [
+            'account' => $account
+        ]);
+    }
+
+    /**
+     * Eliminar cuenta bancaria (solo admin)
+     * POST /bank-accounts/delete/:id
+     */
+    public function bankAccountDelete($id) {
+        $this->requireAdmin();
+
+        $this->bankAccount->id = $id;
+        if ($this->bankAccount->delete()) {
+            flash('Cuenta bancaria eliminada correctamente', 'success');
+        } else {
+            flash('Error al eliminar la cuenta bancaria', 'error');
+        }
+
+        redirect('/bank-accounts');
     }
 }
 ?>

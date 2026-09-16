@@ -13,7 +13,7 @@
  * - Estadísticas de notificaciones (solo admin)
  * 
  * @package App\Controllers
- * @author Sistema de Gestión de Condominio
+ * @author Jesús H. Marcano V.
  * @version 1.0.0
  */
 

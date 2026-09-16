@@ -96,7 +96,7 @@
                         <p class="text-muted">Incidencias Reportadas</p>
                     </div>
                     <div class="col-6">
-                        <h4 class="text-primary"><?= formatCurrency($stats['total_pagado'] ?? 0) ?></h4>
+                        <h4 class="text-primary"><?= formatCurrencyDual($stats['total_pagado'] ?? 0) ?></h4>
                         <p class="text-muted">Total Pagado</p>
                     </div>
                 </div>
@@ -135,20 +135,20 @@
                 <div class="mb-3">
                     <div class="d-flex justify-content-between">
                         <span>Total Pagado:</span>
-                        <strong class="text-success"><?= formatCurrency($stats['total_pagado'] ?? 0) ?></strong>
+                        <strong class="text-success"><?= formatCurrencyDual($stats['total_pagado'] ?? 0) ?></strong>
                     </div>
                 </div>
                 <div class="mb-3">
                     <div class="d-flex justify-content-between">
                         <span>Pendiente:</span>
-                        <strong class="text-warning"><?= formatCurrency($stats['total_pendiente'] ?? 0) ?></strong>
+                        <strong class="text-warning"><?= formatCurrencyDual($stats['total_pendiente'] ?? 0) ?></strong>
                     </div>
                 </div>
                 <hr>
                 <div class="mb-3">
                     <div class="d-flex justify-content-between">
                         <span>Saldo Total:</span>
-                        <strong class="text-primary"><?= formatCurrency(($stats['total_pagado'] ?? 0) + ($stats['total_pendiente'] ?? 0)) ?></strong>
+                        <strong class="text-primary"><?= formatCurrencyDual(($stats['total_pagado'] ?? 0) + ($stats['total_pendiente'] ?? 0)) ?></strong>
                     </div>
                 </div>
             </div>

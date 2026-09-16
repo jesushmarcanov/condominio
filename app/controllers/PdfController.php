@@ -6,7 +6,7 @@
  * Proporciona endpoints dedicados para diferentes tipos de reportes.
  * 
  * @package App\Controllers
- * @author Sistema de Gestión de Condominio
+ * @author Jesús H. Marcano V.
  * @version 1.0.0
  */
 
@@ -34,9 +34,10 @@ class PdfController extends Controller {
         $start_date = isset($_GET['start_date']) ? sanitize($_GET['start_date']) : date('Y-m-01');
         $end_date = isset($_GET['end_date']) ? sanitize($_GET['end_date']) : date('Y-m-d');
         
-        $data = $this->report->generateIncomeReport($start_date, $end_date);
-        $total = array_sum(array_column($data, 'monto'));
-        
+$data = $this->report->generateIncomeReport($start_date, $end_date);
+        $total = array_sum(array_map(function($row) {
+            return convertCurrency($row['monto'], $row['moneda'] ?? baseCurrency(), baseCurrency());
+        }, $data));
         $this->pdfService->generateIncomeReport($data, $start_date, $end_date, $total);
     }
     
@@ -48,9 +49,10 @@ class PdfController extends Controller {
     public function pendingPayments() {
         $this->requireAdmin();
         
-        $data = $this->report->generatePendingPaymentsReport();
-        $total = array_sum(array_column($data, 'monto'));
-        
+$data = $this->report->generatePendingPaymentsReport();
+        $total = array_sum(array_map(function($row) {
+            return convertCurrency($row['monto'], $row['moneda'] ?? baseCurrency(), baseCurrency());
+        }, $data));
         $this->pdfService->generatePendingPaymentsReport($data, $total);
     }
     

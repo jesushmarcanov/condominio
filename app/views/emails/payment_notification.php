@@ -69,7 +69,7 @@
                 </div>
                 <div class="info-row">
                     <span class="label">Monto:</span>
-                    <span class="value">$<?php echo htmlspecialchars($payment_amount); ?></span>
+                    <span class="value"><?php echo htmlspecialchars($payment_amount); ?></span>
                 </div>
                 <div class="info-row">
                     <span class="label">Mes de Pago:</span>

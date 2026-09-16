@@ -60,7 +60,9 @@ class ReportController extends Controller {
                 'payments' => $data,
                 'start_date' => $start_date,
                 'end_date' => $end_date,
-                'total' => array_sum(array_column($data, 'monto'))
+                'total' => array_sum(array_map(function($row) {
+                    return convertCurrency($row['monto'], $row['moneda'] ?? baseCurrency(), baseCurrency());
+                }, $data))
             ]);
         }
     }
@@ -78,7 +80,9 @@ class ReportController extends Controller {
         } else {
             $this->view('admin/reports/pending_payments', [
                 'payments' => $data,
-                'total_pendiente' => array_sum(array_column($data, 'monto'))
+                'total_pendiente' => array_sum(array_map(function($row) {
+                    return convertCurrency($row['monto'], $row['moneda'] ?? baseCurrency(), baseCurrency());
+                }, $data))
             ]);
         }
     }
@@ -397,8 +401,8 @@ class ReportController extends Controller {
         $general_stats = [
             'Total Residentes' => [$stats['total_residentes'], 'Número total de residentes registrados'],
             'Residentes Activos' => [$stats['residentes_activos'], 'Residentes con estado activo'],
-            'Total Ingresos' => ['$' . number_format($stats['total_ingresos'], 2), 'Suma total de todos los ingresos'],
-            'Ingresos Mes Actual' => ['$' . number_format($stats['ingresos_mes'], 2), 'Ingresos del mes en curso'],
+            'Total Ingresos' => [formatAmountIn($stats['total_ingresos'], baseCurrency()), 'Suma total de todos los ingresos'],
+            'Ingresos Mes Actual' => [formatAmountIn($stats['ingresos_mes'], baseCurrency()), 'Ingresos del mes en curso'],
             'Total Incidencias' => [$stats['total_incidencias'], 'Número total de incidencias reportadas'],
             'Incidencias Abiertas' => [$stats['incidencias_abiertas'], 'Incidencias pendientes o en proceso'],
             'Pagos Pendientes' => [$stats['pagos_pendientes'], 'Pagos con estado pendiente'],
@@ -422,7 +426,7 @@ class ReportController extends Controller {
         foreach($monthly_income as $income) {
             fputcsv($output, [
                 date('M Y', strtotime($income['period'])),
-                '$' . number_format($income['amount'], 2),
+                formatAmountIn($income['amount'], baseCurrency()),
                 $income['count']
             ]);
         }

@@ -14,7 +14,7 @@
         <div class="card bg-warning text-white">
             <div class="card-body">
                 <h5><i class="fas fa-clock"></i> Total Pendiente</h5>
-                <h3><?= formatCurrency($total_pendiente) ?></h3>
+                <h3><?= formatCurrencyDual($total_pendiente) ?></h3>
             </div>
         </div>
     </div>
@@ -101,7 +101,7 @@
                                         <td><?= htmlspecialchars($payment['residente_email'] ?? '') ?></td>
                                         <td><?= htmlspecialchars($payment['telefono'] ?? '') ?></td>
                                         <td><?= htmlspecialchars($payment['apartamento']) ?></td>
-                                        <td class="fw-bold text-warning"><?= formatCurrency($payment['monto']) ?></td>
+                                        <td class="fw-bold text-warning"><?= formatCurrencyFrom($payment['monto'], $payment['moneda'] ?? baseCurrency()) ?></td>
                                         <td>
                                             <span class="badge bg-<?= $estado_class ?>">
                                                 <?= htmlspecialchars($payment['estado']) ?>
@@ -137,7 +137,7 @@
                             <tfoot class="table-dark">
                                 <tr>
                                     <th colspan="5">TOTAL</th>
-                                    <th class="fw-bold text-warning"><?= formatCurrency($total_pendiente) ?></th>
+                                    <th class="fw-bold text-warning"><?= formatCurrencyDual($total_pendiente) ?></th>
                                     <th colspan="4"><?= count($payments) ?> pagos pendientes</th>
                                 </tr>
                             </tfoot>

@@ -27,15 +27,30 @@ require_once CONFIG_PATH . '/catalogs.php';
 // Iniciar sesión
 session_start();
 
+// Validar CSRF en solicitudes POST
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!verify_csrf_token()) {
+        http_response_code(403);
+        flash('Token de seguridad inválido. Intente de nuevo.', 'error');
+        header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? APP_URL . '/'));
+        exit();
+    }
+}
+
 // Cargar clases básicas
 require_once APP_PATH . '/models/Database.php';
 require_once APP_PATH . '/models/User.php';
 require_once APP_PATH . '/models/Resident.php';
 require_once APP_PATH . '/models/Payment.php';
 require_once APP_PATH . '/models/Incident.php';
+require_once APP_PATH . '/models/CommonArea.php';
+require_once APP_PATH . '/models/Reservation.php';
 require_once APP_PATH . '/models/Report.php';
 require_once APP_PATH . '/models/Notification.php';
 require_once APP_PATH . '/models/IncidentEvent.php';
+require_once APP_PATH . '/models/BankAccount.php';
+require_once APP_PATH . '/models/PaymentDeclaration.php';
+require_once APP_PATH . '/models/AppSetting.php';
 
 // Cargar modelos de mora si existen
 if (file_exists(APP_PATH . '/models/LateFeeRule.php')) {
@@ -50,18 +65,30 @@ require_once APP_PATH . '/services/EmailService.php';
 require_once APP_PATH . '/services/NotificationService.php';
 require_once APP_PATH . '/services/PdfService.php';
 require_once APP_PATH . '/services/ExcelService.php';
+require_once APP_PATH . '/services/PaymentNotificationService.php';
+
+// Cargar servicio de moneda y exportar configuración a globales
+require_once APP_PATH . '/services/CurrencyService.php';
+$currencyService = new CurrencyService((new Database())->getConnection());
+$currencyService->exportToGlobals();
 
 // Cargar servicio de mora si existe
 if (file_exists(APP_PATH . '/services/LateFeeService.php')) {
     require_once APP_PATH . '/services/LateFeeService.php';
 }
 
+// Cargar validación centralizada
+require_once APP_PATH . '/validation/Validator.php';
+require_once APP_PATH . '/validation/ValidationRules.php';
+
 // Cargar controladores
 require_once APP_PATH . '/controllers/Controller.php';
 require_once APP_PATH . '/controllers/UserController.php';
 require_once APP_PATH . '/controllers/ResidentController.php';
 require_once APP_PATH . '/controllers/PaymentController.php';
+require_once APP_PATH . '/controllers/SettingsController.php';
 require_once APP_PATH . '/controllers/IncidentController.php';
+require_once APP_PATH . '/controllers/CommonAreaController.php';
 require_once APP_PATH . '/controllers/ReportController.php';
 require_once APP_PATH . '/controllers/NotificationController.php';
 require_once APP_PATH . '/controllers/PdfController.php';
@@ -214,6 +241,11 @@ switch ($request_path) {
         $controller->show($matches[1]);
         break;
         
+    case (preg_match('/^\/payments\/receipt\/(\d+)$/', $request_path, $matches) ? true : false):
+        $controller = new PaymentController();
+        $controller->receipt($matches[1]);
+        break;
+        
     case (preg_match('/^\/payments\/edit\/(\d+)$/', $request_path, $matches) ? true : false):
         $controller = new PaymentController();
         $controller->edit($matches[1]);
@@ -276,6 +308,55 @@ switch ($request_path) {
     case '/incidents/report':
         $controller = new IncidentController();
         $controller->report();
+        break;
+        
+    case '/common-areas':
+        $controller = new CommonAreaController();
+        if ($method === 'GET') {
+            $controller->index();
+        } elseif ($method === 'POST') {
+            $controller->create();
+        }
+        break;
+        
+    case '/common-areas/create':
+        $controller = new CommonAreaController();
+        $controller->create();
+        break;
+        
+    case (preg_match('/^\/common-areas\/show\/(\d+)$/', $request_path, $matches) ? true : false):
+        $controller = new CommonAreaController();
+        $controller->show($matches[1]);
+        break;
+        
+    case (preg_match('/^\/common-areas\/edit\/(\d+)$/', $request_path, $matches) ? true : false):
+        $controller = new CommonAreaController();
+        $controller->edit($matches[1]);
+        break;
+        
+    case (preg_match('/^\/common-areas\/delete\/(\d+)$/', $request_path, $matches) ? true : false):
+        $controller = new CommonAreaController();
+        $controller->delete($matches[1]);
+        break;
+        
+    case '/reservations':
+        $controller = new CommonAreaController();
+        $controller->reservations();
+        break;
+        
+    case '/reservations/create':
+        $controller = new CommonAreaController();
+        $controller->createReservation();
+        break;
+        
+    case (preg_match('/^\/reservations\/show\/(\d+)$/', $request_path, $matches) ? true : false):
+        $controller = new CommonAreaController();
+        $controller->showReservation($matches[1]);
+        break;
+        
+    case (preg_match('/^\/reservations\/cancel\/(\d+)$/', $request_path, $matches) ? true : false):
+        $controller = new CommonAreaController();
+        $controller->cancelReservation($matches[1]);
         break;
         
     case '/reports':
@@ -466,6 +547,63 @@ switch ($request_path) {
     case (preg_match('/^\/payments\/(\d+)\/adjust-late-fee$/', $request_path, $matches) ? true : false):
         $controller = new PaymentController();
         $controller->adjustLateFee($matches[1]);
+        break;
+        
+    // Pagos en Línea (Pago Móvil BCV + Transferencia Bancaria)
+    case (preg_match('/^\/payments\/pay\/(\d+)$/', $request_path, $matches) ? true : false):
+        $controller = new PaymentController();
+        $controller->pay($matches[1]);
+        break;
+        
+    case (preg_match('/^\/payments\/declare\/(\d+)$/', $request_path, $matches) ? true : false):
+        $controller = new PaymentController();
+        $controller->declarePayment($matches[1]);
+        break;
+        
+    case '/payments/declarations':
+        $controller = new PaymentController();
+        $controller->declarations();
+        break;
+        
+    case (preg_match('/^\/payments\/declarations\/confirm\/(\d+)$/', $request_path, $matches) ? true : false):
+        $controller = new PaymentController();
+        $controller->confirmDeclaration($matches[1]);
+        break;
+        
+    case (preg_match('/^\/payments\/declarations\/reject\/(\d+)$/', $request_path, $matches) ? true : false):
+        $controller = new PaymentController();
+        $controller->rejectDeclaration($matches[1]);
+        break;
+        
+    // Cuentas Bancarias (Admin only)
+    case '/bank-accounts':
+        $controller = new PaymentController();
+        $controller->bankAccounts();
+        break;
+        
+    case '/bank-accounts/create':
+        $controller = new PaymentController();
+        $controller->bankAccountCreate();
+        break;
+        
+    case (preg_match('/^\/bank-accounts\/edit\/(\d+)$/', $request_path, $matches) ? true : false):
+        $controller = new PaymentController();
+        $controller->bankAccountEdit($matches[1]);
+        break;
+        
+    case (preg_match('/^\/bank-accounts\/delete\/(\d+)$/', $request_path, $matches) ? true : false):
+        $controller = new PaymentController();
+        $controller->bankAccountDelete($matches[1]);
+        break;
+        
+    // Configuración General (Admin only)
+    case '/settings':
+        $controller = new SettingsController();
+        if ($method === 'GET') {
+            $controller->index();
+        } elseif ($method === 'POST') {
+            $controller->update();
+        }
         break;
         
     case '/late-fees/report':

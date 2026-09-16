@@ -26,6 +26,7 @@
                 <?php endif; ?>
 
                 <form method="POST" action="<?= APP_URL ?>/incidents" class="needs-validation" novalidate>
+                    <?= csrf_field() ?>
                     <?php if(isAdmin()): ?>
                     <div class="mb-3">
                         <label for="residente_id" class="form-label">Residente</label>

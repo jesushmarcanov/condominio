@@ -34,6 +34,7 @@
                 <?php endif; ?>
 
                 <form method="POST" action="<?= APP_URL ?>/users/create" class="needs-validation" novalidate>
+                    <?= csrf_field() ?>
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">

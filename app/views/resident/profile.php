@@ -40,10 +40,10 @@
                 <h5><i class="fas fa-user"></i> Datos del Residente</h5>
             </div>
             <div class="card-body">
-                <p><strong>Nombre:</strong> <?= $user['nombre'] ?></p>
-                <p><strong>Email:</strong> <?= $user['email'] ?></p>
-                <p><strong>Teléfono:</strong> <?= $user['telefono'] ?: 'No registrado' ?></p>
-                <p><strong>Rol:</strong> <span class="badge bg-info"><?= ucfirst($user['rol']) ?></span></p>
+                <p><strong>Nombre:</strong> <?= $resident['nombre'] ?></p>
+                <p><strong>Email:</strong> <?= $resident['email'] ?></p>
+                <p><strong>Teléfono:</strong> <?= $resident['telefono'] ?: 'No registrado' ?></p>
+                <p><strong>Rol:</strong> <span class="badge bg-info">Residente</span></p>
             </div>
         </div>
     </div>
@@ -59,11 +59,11 @@
             <div class="card-body">
                 <div class="row text-center">
                     <div class="col-6">
-                        <h4 class="text-success">12</h4>
+                        <h4 class="text-success"><?= $stats['pagos_realizados'] ?></h4>
                         <p class="text-muted">Pagos Realizados</p>
                     </div>
                     <div class="col-6">
-                        <h4 class="text-warning">2</h4>
+                        <h4 class="text-warning"><?= $stats['pagos_pendientes'] ?></h4>
                         <p class="text-muted">Pagos Pendientes</p>
                     </div>
                 </div>
@@ -84,15 +84,15 @@
             <div class="card-body">
                 <div class="row text-center">
                     <div class="col-4">
-                        <h4 class="text-danger">3</h4>
+                        <h4 class="text-danger"><?= $stats['incidencias_pendientes'] ?></h4>
                         <p class="text-muted">Pendientes</p>
                     </div>
                     <div class="col-4">
-                        <h4 class="text-warning">1</h4>
+                        <h4 class="text-warning"><?= $stats['incidencias_en_proceso'] ?></h4>
                         <p class="text-muted">En Proceso</p>
                     </div>
                     <div class="col-4">
-                        <h4 class="text-success">8</h4>
+                        <h4 class="text-success"><?= $stats['incidencias_resueltas'] ?></h4>
                         <p class="text-muted">Resueltas</p>
                     </div>
                 </div>
@@ -149,34 +149,22 @@
                 <h5><i class="fas fa-history"></i> Actividad Reciente</h5>
             </div>
             <div class="card-body">
-                <div class="timeline">
-                    <div class="timeline-item">
-                        <div class="timeline-marker bg-success"></div>
-                        <div class="timeline-content">
-                            <h6>Pago Registrado</h6>
-                            <p class="text-muted">Cuota de mantenimiento - Enero 2024</p>
-                            <small class="text-muted">Hace 2 días</small>
+                <?php if(!empty($recent_activity)): ?>
+                    <div class="timeline">
+                        <?php foreach(array_slice($recent_activity, 0, 5) as $item): ?>
+                        <div class="timeline-item">
+                            <div class="timeline-marker <?= $item['marker'] ?>"></div>
+                            <div class="timeline-content">
+                                <h6><?= $item['title'] ?></h6>
+                                <p class="text-muted"><?= htmlspecialchars($item['description']) ?></p>
+                                <small class="text-muted"><?= formatDate($item['date']) ?></small>
+                            </div>
                         </div>
+                        <?php endforeach; ?>
                     </div>
-                    
-                    <div class="timeline-item">
-                        <div class="timeline-marker bg-warning"></div>
-                        <div class="timeline-content">
-                            <h6>Incidencia Reportada</h6>
-                            <p class="text-muted">Fuga de agua en el baño principal</p>
-                            <small class="text-muted">Hace 1 semana</small>
-                        </div>
-                    </div>
-                    
-                    <div class="timeline-item">
-                        <div class="timeline-marker bg-info"></div>
-                        <div class="timeline-content">
-                            <h6>Perfil Actualizado</h6>
-                            <p class="text-muted">Se actualizó el número de teléfono</p>
-                            <small class="text-muted">Hace 2 semanas</small>
-                        </div>
-                    </div>
-                </div>
+                <?php else: ?>
+                    <p class="text-muted mb-0">Aún no tienes actividad registrada</p>
+                <?php endif; ?>
             </div>
         </div>
     </div>

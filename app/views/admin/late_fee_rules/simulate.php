@@ -30,6 +30,7 @@ require_once APP_PATH . '/views/layouts/header.php';
                 </div>
                 <div class="card-body">
                     <form method="POST" action="/late-fee-rules/simulate">
+                        <?= csrf_field() ?>
                         <div class="mb-3">
                             <label for="regla_id" class="form-label">Regla de Mora *</label>
                             <select class="form-select <?php echo isset($errors['regla_id']) ? 'is-invalid' : ''; ?>" 
@@ -106,7 +107,7 @@ require_once APP_PATH . '/views/layouts/header.php';
                             <h6><strong>Regla Aplicada:</strong> <?php echo htmlspecialchars($result['regla']['nombre']); ?></h6>
                             <p class="mb-0">
                                 <strong>Tipo:</strong> <?php echo $result['regla']['tipo_recargo'] === 'porcentaje' ? 'Porcentaje' : 'Monto Fijo'; ?> |
-                                <strong>Valor:</strong> <?php echo $result['regla']['tipo_recargo'] === 'porcentaje' ? $result['regla']['valor_recargo'] . '%' : '$' . number_format($result['regla']['valor_recargo'], 2); ?> |
+                                <strong>Valor:</strong> <?php echo $result['regla']['tipo_recargo'] === 'porcentaje' ? $result['regla']['valor_recargo'] . '%' : formatAmountIn($result['regla']['valor_recargo'], baseCurrency()); ?> |
                                 <strong>Frecuencia:</strong> <?php echo ucfirst($result['regla']['frecuencia']); ?>
                             </p>
                         </div>

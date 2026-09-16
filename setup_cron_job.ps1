@@ -19,7 +19,7 @@ if (-not $isAdmin) {
 }
 
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "Configurando Cron Job para ResiTech" -ForegroundColor Cyan
+Write-Host "Configurando Cron Job para CondoWeb" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -27,7 +27,7 @@ Write-Host "[OK] Ejecutando con permisos de administrador" -ForegroundColor Gree
 Write-Host ""
 
 # Configuración
-$taskName = "ResiTech-Pagos-Vencidos"
+$taskName = "CondoWeb-Pagos-Vencidos"
 $taskPath = "\ResiTech\"
 $scriptPath = "C:\xampp\htdocs\condominio\run_overdue_payments.bat"
 $workingDir = "C:\xampp\htdocs\condominio"
@@ -110,7 +110,7 @@ try {
     Write-Host "Para verificar la tarea:" -ForegroundColor Cyan
     Write-Host "1. Presiona Windows + R"
     Write-Host "2. Escribe: taskschd.msc"
-    Write-Host "3. Busca '$taskName' en la carpeta 'ResiTech'"
+    Write-Host "3. Busca '$taskName' en la carpeta 'CondoWeb'"
     Write-Host ""
     Write-Host "Para ver los logs:" -ForegroundColor Cyan
     Write-Host "- Logs de ejecución: logs\cron_execution.log"

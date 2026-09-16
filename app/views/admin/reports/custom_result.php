@@ -95,7 +95,7 @@
                 <div class="row text-center">
                     <?php if($report_type === 'income'): ?>
                         <div class="col-md-3">
-                            <h4 class="text-success"><?= formatCurrency(array_sum(array_column($data, 'monto'))) ?></h4>
+                            <h4 class="text-success"><?= formatCurrencyDual(array_sum(array_column($data, 'monto'))) ?></h4>
                             <p class="text-muted">Total Ingresos</p>
                         </div>
                         <div class="col-md-3">
@@ -103,7 +103,7 @@
                             <p class="text-muted">Total Pagos</p>
                         </div>
                         <div class="col-md-3">
-                            <h4 class="text-primary"><?= formatCurrency(array_sum(array_column($data, 'monto')) / count($data)) ?></h4>
+                            <h4 class="text-primary"><?= formatCurrencyDual(array_sum(array_column($data, 'monto')) / count($data)) ?></h4>
                             <p class="text-muted">Promedio</p>
                         </div>
                         <div class="col-md-3">
@@ -146,7 +146,7 @@
                         </div>
                     <?php elseif($report_type === 'payments'): ?>
                         <div class="col-md-3">
-                            <h4 class="text-success"><?= formatCurrency(array_sum(array_column($data, 'monto'))) ?></h4>
+                            <h4 class="text-success"><?= formatCurrencyDual(array_sum(array_column($data, 'monto'))) ?></h4>
                             <p class="text-muted">Total Pagado</p>
                         </div>
                         <div class="col-md-3">
@@ -226,7 +226,7 @@
                                             <td><?= $item['id'] ?></td>
                                             <td><?= htmlspecialchars($item['residente_nombre']) ?></td>
                                             <td><?= htmlspecialchars($item['apartamento']) ?></td>
-                                            <td class="fw-bold text-success"><?= formatCurrency($item['monto']) ?></td>
+                                            <td class="fw-bold text-success"><?= formatCurrencyDual($item['monto']) ?></td>
                                             <td><?= htmlspecialchars($item['metodo_pago']) ?></td>
                                             <td>
                                                 <span class="badge bg-<?= $item['estado'] === 'pagado' ? 'success' : 'warning' ?>">

@@ -23,3 +23,15 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.bak
+
+# --- Archivos de test/debug (eliminados del repo MVP) ---
+test_*.php
+test_*.html
+test_*.pdf
+debug*.php
+debug_reports.php
+calculate_late_fees.php
+check_overdue_payments.php
+cleanup_test_data.php
+create_test_data.php
+_archive_test/

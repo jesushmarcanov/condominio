@@ -3,10 +3,12 @@
 
 class Controller {
     protected $db;
+    protected $validator;
     
     public function __construct() {
         $database = new Database();
         $this->db = $database->getConnection();
+        $this->validator = new Validator();
     }
     
     // Cargar una vista
@@ -59,53 +61,12 @@ class Controller {
     
     // Validar datos del formulario
     protected function validate($data, $rules) {
-        $errors = [];
-        
-        foreach($rules as $field => $field_rules) {
-            $value = isset($data[$field]) ? trim($data[$field]) : '';
-            
-            foreach($field_rules as $rule => $rule_value) {
-                switch($rule) {
-                    case 'required':
-                        if(empty($value)) {
-                            $errors[$field] = "El campo {$field} es requerido";
-                        }
-                        break;
-                        
-                    case 'email':
-                        if(!empty($value) && !filter_var($value, FILTER_VALIDATE_EMAIL)) {
-                            $errors[$field] = "El campo {$field} debe ser un email válido";
-                        }
-                        break;
-                        
-                    case 'min':
-                        if(!empty($value) && strlen($value) < $rule_value) {
-                            $errors[$field] = "El campo {$field} debe tener al menos {$rule_value} caracteres";
-                        }
-                        break;
-                        
-                    case 'max':
-                        if(!empty($value) && strlen($value) > $rule_value) {
-                            $errors[$field] = "El campo {$field} no debe exceder {$rule_value} caracteres";
-                        }
-                        break;
-                        
-                    case 'numeric':
-                        if(!empty($value) && !is_numeric($value)) {
-                            $errors[$field] = "El campo {$field} debe ser numérico";
-                        }
-                        break;
-                        
-                    case 'in':
-                        if(!empty($value) && !in_array($value, $rule_value)) {
-                            $errors[$field] = "El campo {$field} tiene un valor inválido";
-                        }
-                        break;
-                }
-            }
-        }
-        
-        return $errors;
+        return $this->validator->validate($data, $rules);
+    }
+
+    // Validar datos contra un conjunto de reglas centralizado
+    protected function validateRules($key, $data) {
+        return $this->validator->validate($data, ValidationRules::get($key));
     }
     
     // Obtener datos POST sanitizados

@@ -277,10 +277,97 @@ footer {
     margin-left: -260px;
 }
 
+/* Sidebar mini (solo iconos) */
+.sidebar.mini {
+    min-width: 68px;
+    max-width: 68px;
+}
+
+.sidebar.mini .sidebar-header {
+    padding: 20px 0;
+    text-align: center;
+}
+
+.sidebar.mini .sidebar-header h3 {
+    font-size: 1.25rem;
+    margin: 0;
+}
+
+.sidebar.mini .sidebar-header h3 .sidebar-app-name {
+    display: none;
+}
+
+.sidebar.mini .sidebar-header p {
+    display: none;
+}
+
+.sidebar.mini .sidebar-toggle-icon {
+    display: none;
+}
+
+.sidebar.mini ul li a {
+    padding: 14px 0;
+    font-size: 0;
+    text-align: center;
+}
+
+.sidebar.mini ul li a i {
+    margin-right: 0;
+    width: auto;
+    font-size: 1.15rem;
+}
+
+.sidebar.mini ul li a:hover {
+    padding-left: 0;
+}
+
+.sidebar.mini ul li a[aria-expanded="true"] {
+    padding-left: 0;
+}
+
+.sidebar.mini .dropdown-toggle::after {
+    display: none;
+}
+
+.sidebar.mini ul ul {
+    display: none;
+}
+
+#content.mini {
+    margin-left: 68px;
+}
+
+body.sidebar-mini footer {
+    margin-left: 68px !important;
+}
+
 .sidebar-header {
     padding: 20px;
     background: rgba(0, 0, 0, 0.2);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+    cursor: pointer;
+    -webkit-user-select: none;
+    user-select: none;
+    transition: background 0.3s, padding 0.3s;
+}
+
+.sidebar-header:hover {
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.sidebar-toggle-icon {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.6);
+    transition: color 0.3s;
+}
+
+.sidebar-header:hover .sidebar-toggle-icon {
+    color: #fff;
 }
 
 .sidebar-header h3 {
@@ -458,6 +545,19 @@ footer {
 /* Scrollbar personalizado para sidebar */
 .sidebar::-webkit-scrollbar {
     width: 6px;
+}
+
+/* Monto dual (moneda principal + conversión secundaria) */
+.money-primary {
+    white-space: nowrap;
+}
+
+.money-secondary {
+    display: block;
+    font-size: 0.72em;
+    font-weight: normal;
+    color: #6c757d;
+    white-space: nowrap;
 }
 
 .sidebar::-webkit-scrollbar-track {

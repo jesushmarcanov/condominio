@@ -13,6 +13,7 @@ class Report {
         $query = "SELECT 
                     p.id,
                     p.monto,
+                    p.moneda,
                     p.concepto as descripcion,
                     p.mes_pago,
                     p.fecha_pago,
@@ -49,6 +50,7 @@ class Report {
         $query = "SELECT 
                     p.id,
                     p.monto,
+                    p.moneda,
                     p.concepto,
                     p.mes_pago,
                     p.estado,
@@ -177,19 +179,43 @@ class Report {
         $stmt->execute();
         $stats['residentes'] = $stmt->fetch(PDO::FETCH_ASSOC);
         
-        // Estadísticas de pagos
-        $query = "SELECT 
-                    COUNT(*) as total_pagos,
-                    COALESCE(SUM(monto), 0) as total_ingresos,
-                    COALESCE(SUM(CASE WHEN estado = 'pagado' THEN monto ELSE 0 END), 0) as total_pagado,
-                    COALESCE(SUM(CASE WHEN estado = 'pendiente' THEN monto ELSE 0 END), 0) as total_pendiente,
-                    COUNT(CASE WHEN estado = 'pagado' THEN 1 END) as pagos_realizados,
-                    COUNT(CASE WHEN estado = 'pendiente' THEN 1 END) as pagos_pendientes,
-                    COUNT(CASE WHEN estado = 'pendiente' AND fecha_pago < DATE_SUB(CURRENT_DATE, INTERVAL 1 MONTH) THEN 1 END) as pagos_atrasados
-                  FROM pagos";
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
-        $stats['pagos'] = $stmt->fetch(PDO::FETCH_ASSOC);
+        // Estadísticas de pagos (normalizadas a moneda base con la tasa vigente)
+        $rows = $this->conn->query(
+            "SELECT monto, moneda, estado, fecha_pago FROM pagos"
+        )->fetchAll(PDO::FETCH_ASSOC);
+
+        $base = function_exists('baseCurrency') ? baseCurrency() : 'USD';
+
+        $stats['pagos'] = [
+            'total_pagos' => 0,
+            'total_ingresos' => 0.0,
+            'total_pagado' => 0.0,
+            'total_pendiente' => 0.0,
+            'pagos_realizados' => 0,
+            'pagos_pendientes' => 0,
+            'pagos_atrasados' => 0
+        ];
+
+        foreach ($rows as $row) {
+            $stats['pagos']['total_pagos']++;
+            $ccy = !empty($row['moneda']) ? $row['moneda'] : $base;
+            $monto = function_exists('convertCurrency')
+                ? convertCurrency((float)$row['monto'], $ccy, $base)
+                : (float)$row['monto'];
+
+            $stats['pagos']['total_ingresos'] += $monto;
+
+            if ($row['estado'] === 'pagado') {
+                $stats['pagos']['total_pagado'] += $monto;
+                $stats['pagos']['pagos_realizados']++;
+            } elseif ($row['estado'] === 'pendiente') {
+                $stats['pagos']['total_pendiente'] += $monto;
+                $stats['pagos']['pagos_pendientes']++;
+                if (strtotime($row['fecha_pago']) < strtotime('-1 month')) {
+                    $stats['pagos']['pagos_atrasados']++;
+                }
+            }
+        }
         
         // Estadísticas de incidencias
         $query = "SELECT 
@@ -207,19 +233,38 @@ class Report {
 
     // Obtener datos para gráficos
     public function getChartData($type = 'monthly_income') {
+        $base = function_exists('baseCurrency') ? baseCurrency() : 'USD';
+
         switch($type) {
             case 'monthly_income':
-                $query = "SELECT 
-                            DATE_FORMAT(fecha_pago, '%Y-%m') as period,
-                            COALESCE(SUM(monto), 0) as amount,
-                            COUNT(*) as count
-                          FROM pagos 
-                          WHERE estado = 'pagado' 
-                          AND fecha_pago >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
-                          GROUP BY DATE_FORMAT(fecha_pago, '%Y-%m')
-                          ORDER BY period ASC";
-                break;
-                
+                $rows = $this->conn->query(
+                    "SELECT monto, moneda, fecha_pago FROM pagos
+                     WHERE estado = 'pagado'
+                     AND fecha_pago >= DATE_SUB(NOW(), INTERVAL 12 MONTH)"
+                )->fetchAll(PDO::FETCH_ASSOC);
+
+                $periodos = [];
+                foreach ($rows as $row) {
+                    $period = date('Y-m', strtotime($row['fecha_pago']));
+                    $ccy = !empty($row['moneda']) ? $row['moneda'] : $base;
+                    $monto = function_exists('convertCurrency')
+                        ? convertCurrency((float)$row['monto'], $ccy, $base)
+                        : (float)$row['monto'];
+
+                    if (!isset($periodos[$period])) {
+                        $periodos[$period] = ['period' => $period, 'amount' => 0.0, 'count' => 0];
+                    }
+                    $periodos[$period]['amount'] += $monto;
+                    $periodos[$period]['count']++;
+                }
+
+                ksort($periodos);
+                $results = array_values($periodos);
+                if (empty($results)) {
+                    return [['period' => date('Y-m'), 'amount' => 0, 'count' => 0]];
+                }
+                return $results;
+
             case 'monthly_incidents':
                 $query = "SELECT 
                             DATE_FORMAT(fecha_reporte, '%Y-%m') as period,
@@ -240,15 +285,34 @@ class Report {
                 break;
                 
             case 'payment_methods':
-                $query = "SELECT 
-                            metodo_pago as method,
-                            COUNT(*) as count,
-                            COALESCE(SUM(monto), 0) as total
-                          FROM pagos 
-                          WHERE estado = 'pagado'
-                          GROUP BY metodo_pago 
-                          ORDER BY count DESC";
-                break;
+                $rows = $this->conn->query(
+                    "SELECT metodo_pago, monto, moneda FROM pagos
+                     WHERE estado = 'pagado'"
+                )->fetchAll(PDO::FETCH_ASSOC);
+
+                $metodos = [];
+                foreach ($rows as $row) {
+                    $method = $row['metodo_pago'];
+                    $ccy = !empty($row['moneda']) ? $row['moneda'] : $base;
+                    $monto = function_exists('convertCurrency')
+                        ? convertCurrency((float)$row['monto'], $ccy, $base)
+                        : (float)$row['monto'];
+
+                    if (!isset($metodos[$method])) {
+                        $metodos[$method] = ['method' => $method, 'count' => 0, 'total' => 0.0];
+                    }
+                    $metodos[$method]['count']++;
+                    $metodos[$method]['total'] += $monto;
+                }
+
+                uasort($metodos, function ($a, $b) {
+                    return $b['count'] <=> $a['count'];
+                });
+                $results = array_values($metodos);
+                if (empty($results)) {
+                    return [['method' => 'Sin datos', 'count' => 0, 'total' => 0]];
+                }
+                return $results;
                 
             default:
                 return [];
@@ -353,7 +417,7 @@ class Report {
                 foreach($row as $key => $value) {
                     // Formatear campos especiales
                     if(strstr($key, 'monto') || strstr($key, 'ingreso') || strstr($key, 'total') || strstr($key, 'amount')) {
-                        $formatted_row[] = '$' . number_format(floatval($value), 2);
+                        $formatted_row[] = formatAmountIn(floatval($value), baseCurrency());
                     } elseif(strstr($key, 'fecha') || strstr($key, 'date') || strstr($key, 'created_at')) {
                         $formatted_row[] = $value ? date('d/m/Y', strtotime($value)) : '';
                     } elseif(strstr($key, 'email')) {
@@ -387,23 +451,46 @@ class Report {
         if(!$year) {
             $year = date('Y');
         }
-        
-        $query = "SELECT 
-                    MONTH(fecha_pago) as mes,
-                    COALESCE(SUM(CASE WHEN estado = 'pagado' THEN monto ELSE 0 END), 0) as ingresos,
-                    COUNT(CASE WHEN estado = 'pagado' THEN 1 END) as pagos_realizados,
-                    COALESCE(SUM(CASE WHEN estado = 'pendiente' THEN monto ELSE 0 END), 0) as pendiente,
-                    COUNT(CASE WHEN estado = 'pendiente' THEN 1 END) as pagos_pendientes
-                  FROM pagos 
-                  WHERE YEAR(fecha_pago) = :year
-                  GROUP BY MONTH(fecha_pago)
-                  ORDER BY mes";
-        
-        $stmt = $this->conn->prepare($query);
+
+        $stmt = $this->conn->prepare(
+            "SELECT monto, moneda, estado, fecha_pago FROM pagos
+             WHERE YEAR(fecha_pago) = :year"
+        );
         $stmt->bindParam(":year", $year);
         $stmt->execute();
-        
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $base = function_exists('baseCurrency') ? baseCurrency() : 'USD';
+
+        $meses = [];
+        foreach ($rows as $row) {
+            $mes = (int)date('n', strtotime($row['fecha_pago']));
+            $ccy = !empty($row['moneda']) ? $row['moneda'] : $base;
+            $monto = function_exists('convertCurrency')
+                ? convertCurrency((float)$row['monto'], $ccy, $base)
+                : (float)$row['monto'];
+
+            if (!isset($meses[$mes])) {
+                $meses[$mes] = [
+                    'mes' => $mes,
+                    'ingresos' => 0.0,
+                    'pagos_realizados' => 0,
+                    'pendiente' => 0.0,
+                    'pagos_pendientes' => 0
+                ];
+            }
+
+            if ($row['estado'] === 'pagado') {
+                $meses[$mes]['ingresos'] += $monto;
+                $meses[$mes]['pagos_realizados']++;
+            } elseif ($row['estado'] === 'pendiente') {
+                $meses[$mes]['pendiente'] += $monto;
+                $meses[$mes]['pagos_pendientes']++;
+            }
+        }
+
+        ksort($meses);
+        return array_values($meses);
     }
 }
 ?>

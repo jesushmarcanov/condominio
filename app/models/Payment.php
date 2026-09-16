@@ -12,7 +12,7 @@
  * - pagado: Pago completado
  * 
  * @package App\Models
- * @author Sistema de Gestión de Condominio
+ * @author Jesús H. Marcano V.
  * @version 1.0.0
  */
 
@@ -29,6 +29,8 @@ class Payment {
     public $metodo_pago;
     public $referencia;
     public $estado;
+    public $moneda;
+    public $monto_moneda_original;
     public $created_at;
     public $updated_at;
     
@@ -56,7 +58,7 @@ class Payment {
      * @return bool True si se creó exitosamente, false en caso contrario
      */
     public function create() {
-        $query = "INSERT INTO " . $this->table_name . " (residente_id, monto, concepto, mes_pago, fecha_pago, metodo_pago, referencia, estado) VALUES (:residente_id, :monto, :concepto, :mes_pago, :fecha_pago, :metodo_pago, :referencia, :estado)";
+        $query = "INSERT INTO " . $this->table_name . " (residente_id, monto, concepto, mes_pago, fecha_pago, metodo_pago, referencia, estado, moneda, monto_moneda_original) VALUES (:residente_id, :monto, :concepto, :mes_pago, :fecha_pago, :metodo_pago, :referencia, :estado, :moneda, :monto_moneda_original)";
         
         $stmt = $this->conn->prepare($query);
         
@@ -69,6 +71,8 @@ class Payment {
         $this->metodo_pago = htmlspecialchars(strip_tags($this->metodo_pago));
         $this->referencia = htmlspecialchars(strip_tags($this->referencia));
         $this->estado = htmlspecialchars(strip_tags($this->estado));
+        $this->moneda = $this->moneda !== null ? htmlspecialchars(strip_tags($this->moneda)) : 'USD';
+        $this->monto_moneda_original = $this->monto_moneda_original !== null ? htmlspecialchars(strip_tags($this->monto_moneda_original)) : null;
         
         // Bind parameters
         $stmt->bindParam(":residente_id", $this->residente_id);
@@ -79,6 +83,8 @@ class Payment {
         $stmt->bindParam(":metodo_pago", $this->metodo_pago);
         $stmt->bindParam(":referencia", $this->referencia);
         $stmt->bindParam(":estado", $this->estado);
+        $stmt->bindParam(":moneda", $this->moneda);
+        $stmt->bindParam(":monto_moneda_original", $this->monto_moneda_original);
         
         if($stmt->execute()) {
             $this->id = $this->conn->lastInsertId();
@@ -164,7 +170,7 @@ class Payment {
      * @return bool True si se actualizó exitosamente, false en caso contrario
      */
     public function update() {
-        $query = "UPDATE " . $this->table_name . " SET residente_id = :residente_id, monto = :monto, concepto = :concepto, mes_pago = :mes_pago, fecha_pago = :fecha_pago, metodo_pago = :metodo_pago, referencia = :referencia, estado = :estado WHERE id = :id";
+        $query = "UPDATE " . $this->table_name . " SET residente_id = :residente_id, monto = :monto, concepto = :concepto, mes_pago = :mes_pago, fecha_pago = :fecha_pago, metodo_pago = :metodo_pago, referencia = :referencia, estado = :estado, moneda = COALESCE(:moneda, moneda), monto_moneda_original = COALESCE(:monto_moneda_original, monto_moneda_original) WHERE id = :id";
         
         $stmt = $this->conn->prepare($query);
         
@@ -177,6 +183,8 @@ class Payment {
         $this->metodo_pago = htmlspecialchars(strip_tags($this->metodo_pago));
         $this->referencia = htmlspecialchars(strip_tags($this->referencia));
         $this->estado = htmlspecialchars(strip_tags($this->estado));
+        $this->moneda = $this->moneda !== null ? htmlspecialchars(strip_tags($this->moneda)) : null;
+        $this->monto_moneda_original = $this->monto_moneda_original !== null ? htmlspecialchars(strip_tags($this->monto_moneda_original)) : null;
         
         // Bind parameters
         $stmt->bindParam(":residente_id", $this->residente_id);
@@ -187,6 +195,8 @@ class Payment {
         $stmt->bindParam(":metodo_pago", $this->metodo_pago);
         $stmt->bindParam(":referencia", $this->referencia);
         $stmt->bindParam(":estado", $this->estado);
+        $stmt->bindParam(":moneda", $this->moneda);
+        $stmt->bindParam(":monto_moneda_original", $this->monto_moneda_original);
         $stmt->bindParam(":id", $this->id);
         
         if($stmt->execute()) {
@@ -215,6 +225,28 @@ class Payment {
         }
         
         return false;
+    }
+
+    /**
+     * Obtener pagos pendientes o atrasados de un residente
+     * 
+     * @param int $residente_id ID del residente
+     * @return PDOStatement Resultado de la consulta
+     */
+    public function getPendingForResident($residente_id) {
+        $query = "SELECT p.*, r.apartamento, u.nombre, u.email
+                  FROM " . $this->table_name . " p
+                  LEFT JOIN residentes r ON p.residente_id = r.id
+                  LEFT JOIN usuarios u ON r.usuario_id = u.id
+                  WHERE p.residente_id = :residente_id
+                  AND (p.estado = 'pendiente' OR p.estado = 'atrasado')
+                  ORDER BY p.fecha_pago ASC";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":residente_id", $residente_id);
+        $stmt->execute();
+
+        return $stmt;
     }
 
     /**
@@ -268,22 +300,55 @@ class Payment {
      * @return array Estadísticas de pagos
      */
     public function getStats() {
-        $query = "SELECT 
-                    COUNT(*) as total_pagos,
-                    COALESCE(SUM(monto), 0) as total_ingresos,
-                    COALESCE(SUM(CASE WHEN estado = 'pagado' THEN monto ELSE 0 END), 0) as total_pagado,
-                    COALESCE(SUM(CASE WHEN estado = 'pendiente' THEN monto ELSE 0 END), 0) as total_pendiente,
-                    COALESCE(SUM(CASE WHEN estado = 'atrasado' THEN monto ELSE 0 END), 0) as total_atrasado,
-                    COUNT(CASE WHEN estado = 'pagado' THEN 1 END) as pagos_realizados,
-                    COUNT(CASE WHEN estado = 'pendiente' THEN 1 END) as pagos_pendientes,
-                    COUNT(CASE WHEN estado = 'atrasado' THEN 1 END) as pagos_atrasados,
-                    COUNT(CASE WHEN created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 END) as pagos_30_dias
-                  FROM " . $this->table_name;
-        
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
-        
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        // Las filas pueden estar en USD o VES (moneda del momento de creación),
+        // por lo que las agregamos en PHP convirtiendo cada monto a la moneda base
+        // con la tasa vigente, en lugar de sumar valores en monedas mezcladas.
+        $rows = $this->conn->query(
+            "SELECT monto, moneda, estado, created_at FROM " . $this->table_name
+        )->fetchAll(PDO::FETCH_ASSOC);
+
+        $base = function_exists('baseCurrency') ? baseCurrency() : 'USD';
+
+        $stats = [
+            'total_pagos' => 0,
+            'total_ingresos' => 0.0,
+            'total_pagado' => 0.0,
+            'total_pendiente' => 0.0,
+            'total_atrasado' => 0.0,
+            'pagos_realizados' => 0,
+            'pagos_pendientes' => 0,
+            'pagos_atrasados' => 0,
+            'pagos_30_dias' => 0,
+        ];
+
+        $treinta_dias = strtotime('-30 days');
+
+        foreach ($rows as $row) {
+            $stats['total_pagos']++;
+            $ccy = !empty($row['moneda']) ? $row['moneda'] : $base;
+            $monto = function_exists('convertCurrency')
+                ? convertCurrency((float)$row['monto'], $ccy, $base)
+                : (float)$row['monto'];
+
+            $stats['total_ingresos'] += $monto;
+
+            if ($row['estado'] === 'pagado') {
+                $stats['total_pagado'] += $monto;
+                $stats['pagos_realizados']++;
+            } elseif ($row['estado'] === 'pendiente') {
+                $stats['total_pendiente'] += $monto;
+                $stats['pagos_pendientes']++;
+            } elseif ($row['estado'] === 'atrasado') {
+                $stats['total_atrasado'] += $monto;
+                $stats['pagos_atrasados']++;
+            }
+
+            if (strtotime($row['created_at']) >= $treinta_dias) {
+                $stats['pagos_30_dias']++;
+            }
+        }
+
+        return $stats;
     }
 
     /**
@@ -295,21 +360,38 @@ class Payment {
      * @return array Ingresos mensuales agrupados por mes
      */
     public function getMonthlyIncome($months = 12) {
-        $query = "SELECT 
-                    DATE_FORMAT(fecha_pago, '%Y-%m') as mes,
-                    SUM(monto) as ingresos,
-                    COUNT(*) as cantidad_pagos
-                  FROM " . $this->table_name . " 
-                  WHERE estado = 'pagado' 
-                  AND fecha_pago >= DATE_SUB(NOW(), INTERVAL :months MONTH)
-                  GROUP BY DATE_FORMAT(fecha_pago, '%Y-%m')
-                  ORDER BY mes ASC";
-        
-        $stmt = $this->conn->prepare($query);
+        $stmt = $this->conn->prepare(
+            "SELECT monto, moneda, fecha_pago FROM " . $this->table_name . "
+             WHERE estado = 'pagado'
+             AND fecha_pago >= DATE_SUB(NOW(), INTERVAL :months MONTH)"
+        );
         $stmt->bindParam(":months", $months);
         $stmt->execute();
-        
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $base = function_exists('baseCurrency') ? baseCurrency() : 'USD';
+
+        $meses = [];
+        foreach ($rows as $row) {
+            $mes = date('Y-m', strtotime($row['fecha_pago']));
+            $ccy = !empty($row['moneda']) ? $row['moneda'] : $base;
+            $monto = function_exists('convertCurrency')
+                ? convertCurrency((float)$row['monto'], $ccy, $base)
+                : (float)$row['monto'];
+
+            if (!isset($meses[$mes])) {
+                $meses[$mes] = ['mes' => $mes, 'ingresos' => 0.0, 'cantidad_pagos' => 0];
+            }
+            $meses[$mes]['ingresos'] += $monto;
+            $meses[$mes]['cantidad_pagos']++;
+        }
+
+        $result = array_values($meses);
+        usort($result, function ($a, $b) {
+            return strcmp($a['mes'], $b['mes']);
+        });
+
+        return $result;
     }
 
     /**

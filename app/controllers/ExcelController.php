@@ -19,9 +19,10 @@ class ExcelController extends Controller {
         $start_date = isset($_GET['start_date']) ? sanitize($_GET['start_date']) : date('Y-m-01');
         $end_date = isset($_GET['end_date']) ? sanitize($_GET['end_date']) : date('Y-m-d');
         
-        $data = $this->report->generateIncomeReport($start_date, $end_date);
-        $total = array_sum(array_column($data, 'monto'));
-        
+$data = $this->report->generateIncomeReport($start_date, $end_date);
+        $total = array_sum(array_map(function($row) {
+            return convertCurrency($row['monto'], $row['moneda'] ?? baseCurrency(), baseCurrency());
+        }, $data));
         $this->excelService->generateIncomeReport($data, $start_date, $end_date, $total);
     }
     
@@ -32,9 +33,10 @@ class ExcelController extends Controller {
     public function pendingPayments() {
         $this->requireAdmin();
         
-        $data = $this->report->generatePendingPaymentsReport();
-        $total = array_sum(array_column($data, 'monto'));
-        
+$data = $this->report->generatePendingPaymentsReport();
+        $total = array_sum(array_map(function($row) {
+            return convertCurrency($row['monto'], $row['moneda'] ?? baseCurrency(), baseCurrency());
+        }, $data));
         $this->excelService->generatePendingPaymentsReport($data, $total);
     }
     

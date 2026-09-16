@@ -15,7 +15,7 @@
  * - Registrar logs detallados de cada operación
  * 
  * @package App\Services
- * @author Sistema de Gestión de Condominio
+ * @author Jesús H. Marcano V.
  * @version 1.0.0
  */
 
@@ -265,7 +265,7 @@ class NotificationService {
     private function buildNotificationMessage($payment_data) {
         $mensaje = "Estimado residente, le recordamos que tiene un pago pendiente:\n\n";
         $mensaje .= "Concepto: " . $payment_data['concepto'] . "\n";
-        $mensaje .= "Monto: $" . number_format($payment_data['monto'], 2) . "\n";
+        $mensaje .= "Monto: " . formatAmountIn($payment_data['monto'], baseCurrency()) . "\n";
         $mensaje .= "Mes: " . $payment_data['mes_pago'] . "\n";
         $mensaje .= "Fecha de vencimiento: " . $payment_data['fecha_pago'] . "\n\n";
         $mensaje .= "Por favor, regularice su situación a la brevedad.";
@@ -301,7 +301,7 @@ class NotificationService {
                 'apartment' => $resident_data['apartamento'],
                 'tower' => $resident_data['torre'],
                 'payment_concept' => $payment_data['concepto'],
-                'payment_amount' => number_format($payment_data['monto'], 2),
+                'payment_amount' => formatAmountIn($payment_data['monto'], $payment_data['moneda'] ?? baseCurrency()),
                 'payment_month' => $payment_data['mes_pago'],
                 'due_date' => date('d/m/Y', strtotime($payment_data['fecha_pago'])),
                 'reference' => $payment_data['referencia'] ?? 'N/A',

@@ -19,9 +19,11 @@
     <div class="wrapper">
         <!-- Sidebar -->
         <nav id="sidebar" class="sidebar">
-            <div class="sidebar-header">
-                <h3><i class="fas fa-building"></i> <?= APP_NAME ?></h3>
+            <div class="sidebar-header" id="sidebarHeader" role="button" tabindex="0"
+                 aria-label="Contraer o expandir menú" title="Contraer / Expandir menú">
+                <h3><i class="fas fa-building"></i> <span class="sidebar-app-name"><?= APP_NAME ?></span></h3>
                 <p><?= isAdmin() ? 'Panel de Administración' : 'Panel de Residente' ?></p>
+                <i class="fas fa-angle-left sidebar-toggle-icon"></i>
             </div>
 
             <ul class="list-unstyled components">
@@ -65,6 +67,8 @@
                         <li><a href="<?= APP_URL ?>/payments/create"><i class="fas fa-plus"></i> Nuevo Pago</a></li>
                         <li><a href="<?= APP_URL ?>/payments/pending"><i class="fas fa-clock"></i> Pagos Pendientes</a></li>
                         <li><a href="<?= APP_URL ?>/payments/stats"><i class="fas fa-chart-bar"></i> Estadísticas</a></li>
+                        <li><a href="<?= APP_URL ?>/payments/declarations"><i class="fas fa-hand-holding-usd"></i> Declaraciones en Línea</a></li>
+                        <li><a href="<?= APP_URL ?>/bank-accounts"><i class="fas fa-university"></i> Cuentas Bancarias</a></li>
                     </ul>
                 </li>
 
@@ -77,6 +81,18 @@
                         <li><a href="<?= APP_URL ?>/incidents"><i class="fas fa-list"></i> Gestionar Incidencias</a></li>
                         <li><a href="<?= APP_URL ?>/incidents/create"><i class="fas fa-plus"></i> Nueva Incidencia</a></li>
                         <li><a href="<?= APP_URL ?>/incidents/stats"><i class="fas fa-chart-bar"></i> Estadísticas</a></li>
+                    </ul>
+                </li>
+
+                <!-- Áreas Comunes (Solo Admin) -->
+                <li>
+                    <a href="#areasSubmenu" data-bs-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
+                        <i class="fas fa-tree"></i> Áreas Comunes
+                    </a>
+                    <ul class="collapse list-unstyled" id="areasSubmenu">
+                        <li><a href="<?= APP_URL ?>/common-areas"><i class="fas fa-list"></i> Gestionar Áreas</a></li>
+                        <li><a href="<?= APP_URL ?>/common-areas/create"><i class="fas fa-plus"></i> Nueva Área</a></li>
+                        <li><a href="<?= APP_URL ?>/reservations"><i class="fas fa-calendar-check"></i> Reservas</a></li>
                     </ul>
                 </li>
 
@@ -123,6 +139,18 @@
                 </li>
 
                 <li>
+                    <a href="<?= APP_URL ?>/common-areas">
+                        <i class="fas fa-tree"></i> Áreas Comunes
+                    </a>
+                </li>
+
+                <li>
+                    <a href="<?= APP_URL ?>/reservations">
+                        <i class="fas fa-calendar-check"></i> Mis Reservas
+                    </a>
+                </li>
+
+                <li>
                     <a href="<?= APP_URL ?>/notifications">
                         <i class="fas fa-bell"></i> Notificaciones
                     </a>
@@ -131,6 +159,15 @@
 
                 <!-- Separador -->
                 <li style="border-top: 2px solid rgba(255, 255, 255, 0.1); margin: 10px 0;"></li>
+
+                <?php if(isAdmin()): ?>
+                <!-- Configuración (Solo Admin) -->
+                <li>
+                    <a href="<?= APP_URL ?>/settings">
+                        <i class="fas fa-cogs"></i> Configuración
+                    </a>
+                </li>
+                <?php endif; ?>
 
                 <!-- Perfil -->
                 <li>

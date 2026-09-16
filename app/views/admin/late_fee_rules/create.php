@@ -37,6 +37,7 @@ require_once APP_PATH . '/views/layouts/header.php';
                 </div>
                 <div class="card-body">
                     <form method="POST" action="/late-fee-rules" id="lateFeeForm">
+                        <?= csrf_field() ?>
                         <div class="mb-3">
                             <label for="nombre" class="form-label">Nombre de la Regla *</label>
                             <input type="text" 
@@ -256,13 +257,13 @@ function updateValueLabel() {
         valorInput.max = '100';
     } else if (tipoRecargo === 'monto_fijo') {
         valorLabel.textContent = 'Monto Fijo de Recargo *';
-        valorPrefix.textContent = '$';
+        valorPrefix.textContent = '<?= currencySymbol() ?>';
         valorSuffix.textContent = '';
         valorHelp.textContent = 'Monto fijo a aplicar';
         valorInput.removeAttribute('max');
     } else {
         valorLabel.textContent = 'Valor del Recargo *';
-        valorPrefix.textContent = '$';
+        valorPrefix.textContent = '<?= currencySymbol() ?>';
         valorSuffix.textContent = '';
         valorHelp.textContent = 'Ingrese el valor del recargo';
         valorInput.removeAttribute('max');

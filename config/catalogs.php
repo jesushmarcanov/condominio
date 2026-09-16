@@ -26,8 +26,46 @@ define('PAYMENT_STATUSES', [
 define('PAYMENT_METHODS', [
     'efectivo' => 'Efectivo',
     'transferencia' => 'Transferencia',
+    'pago_movil' => 'Pago Móvil',
     'tarjeta' => 'Tarjeta',
     'deposito' => 'Depósito'
+]);
+
+// Catálogo de Métodos de Pago en Línea (declaraciones)
+define('ONLINE_PAYMENT_METHODS', [
+    'pago_movil' => 'Pago Móvil',
+    'transferencia' => 'Transferencia'
+]);
+
+// Catálogo de Estados de Declaraciones de Pago
+define('PAYMENT_DECLARATION_STATUSES', [
+    'pendiente' => 'Pendiente',
+    'confirmada' => 'Confirmada',
+    'rechazada' => 'Rechazada'
+]);
+
+// Catálogo de Bancos de Venezuela
+define('BANCOS_VENEZUELA', [
+    'banesco' => 'Banesco',
+    'bbva' => 'BBVA Provincial',
+    'bdv' => 'Banco de Venezuela',
+    'mercantil' => 'Bancamercantil',
+    'venezolano_credito' => 'Venezolano de Crédito',
+    'nacional_credito' => 'Banco Nacional de Crédito',
+    'exterior' => 'Banco Exterior',
+    'provincial' => 'Banco Provincial',
+    'bancaribe' => 'Bancaribe',
+    'fondo_comun' => 'Banco Fondo Común',
+    'sofitasa' => 'Banco Sofitasa',
+    'bicentenario' => 'Banco Bicentenario',
+    'tesoro' => 'Banco del Tesoro',
+    'del_sur' => 'Banco del Sur',
+    'agricola' => 'Banco Agrícola',
+    'bangente' => 'Bangente',
+    'mi_banco' => 'Mi Banco',
+    'banplus' => 'Banplus',
+    'activo' => 'Banco Activo',
+    'invest' => 'Banco Invest'
 ]);
 
 // Catálogo de Estados de Incidencias
@@ -178,6 +216,11 @@ function getStatusBadgeClass($status, $type = 'payment') {
             'warning' => 'warning',
             'success' => 'success',
             'error' => 'danger'
+        ],
+        'declaration' => [
+            'pendiente' => 'warning',
+            'confirmada' => 'success',
+            'rechazada' => 'danger'
         ]
     ];
     

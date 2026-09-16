@@ -6,7 +6,7 @@
  * Cada evento registra quién hizo qué cambio, cuándo y desde dónde.
  * 
  * @package App\Models
- * @author ResiTech
+ * @author Jesús H. Marcano V.
  * @version 1.0.0
  */
 
