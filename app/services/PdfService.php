@@ -7,6 +7,48 @@ use Dompdf\Options;
 class PdfService {
     private $dompdf;
     private $options;
+    private $empresaModel_cache;
+    
+    private function getEmpresaData() {
+        if (!isset($this->empresaModel_cache)) {
+            if (!class_exists('Database')) {
+                require_once ROOT_PATH . '/app/models/Database.php';
+            }
+            if (!class_exists('Empresa')) {
+                require_once ROOT_PATH . '/app/models/Empresa.php';
+            }
+            $db = (new Database())->getConnection();
+            $this->empresaModel_cache = (new Empresa($db))->getData();
+        }
+        return $this->empresaModel_cache;
+    }
+    
+    private function getCompanyLogoHtml() {
+        $empresa = $this->getEmpresaData();
+        $logo = $empresa['logo'] ?? '';
+        if (empty($logo)) {
+            return '';
+        }
+        return '<div style="float:right; width:110px; text-align:right; margin:0 0 8px 10px; opacity:0.9;"><img src="' . APP_URL . '/' . htmlspecialchars($logo) . '" style="max-width:110px; max-height:60px;"></div>';
+    }
+    
+    private function getCompanyMetaLineHtml() {
+        $empresa = $this->getEmpresaData();
+        $parts = [];
+        if (!empty(trim($empresa['nombre']))) {
+            $parts[] = htmlspecialchars(trim($empresa['nombre']));
+        }
+        if (!empty(trim($empresa['rif']))) {
+            $parts[] = 'RIF: ' . htmlspecialchars(trim($empresa['rif']));
+        }
+        if (!empty(trim($empresa['telefono1']))) {
+            $parts[] = 'Tel: ' . htmlspecialchars(trim($empresa['telefono1']));
+        }
+        if (!$parts) {
+            return '';
+        }
+        return '<p style="margin:2px 0 0; font-size:10px; color:#444; text-align:center;">' . implode(' &nbsp;•&nbsp; ', $parts) . '</p>';
+    }
     
     public function __construct() {
         $this->options = new Options();
@@ -77,7 +119,8 @@ tr:nth-child(even) { background-color: #f8f9fa; }
 .footer { text-align: center; margin-top: 40px; font-size: 10px; color: #666; }
 </style></head><body>
 <div class="header">
-<h1>Sistema de Gestión de Condominio</h1>
+' . $this->getCompanyLogoHtml() . '
+<h1>Sistema de Gestión de Condominio</h1>' . $this->getCompanyMetaLineHtml() . '
 <h2>Reporte de Ingresos</h2>
 <p>Período: ' . date('d/m/Y', strtotime($start_date)) . ' - ' . date('d/m/Y', strtotime($end_date)) . '</p>
 </div>
@@ -127,7 +170,8 @@ tr:nth-child(even) { background-color: #f8f9fa; }
 .footer { text-align: center; margin-top: 40px; font-size: 10px; color: #666; }
 </style></head><body>
 <div class="header">
-<h1>Sistema de Gestión de Condominio</h1>
+' . $this->getCompanyLogoHtml() . '
+<h1>Sistema de Gestión de Condominio</h1>' . $this->getCompanyMetaLineHtml() . '
 <h2>Reporte de Pagos Pendientes</h2>
 <p>Fecha de generación: ' . date('d/m/Y H:i:s') . '</p>
 </div>
@@ -178,7 +222,8 @@ tr:nth-child(even) { background-color: #f8f9fa; }
 .footer { text-align: center; margin-top: 40px; font-size: 10px; color: #666; }
 </style></head><body>
 <div class="header">
-<h1>Sistema de Gestión de Condominio</h1>
+' . $this->getCompanyLogoHtml() . '
+<h1>Sistema de Gestión de Condominio</h1>' . $this->getCompanyMetaLineHtml() . '
 <h2>Reporte de Incidencias</h2>
 <p>Período: ' . date('d/m/Y', strtotime($start_date)) . ' - ' . date('d/m/Y', strtotime($end_date)) . '</p>
 </div>
@@ -228,7 +273,8 @@ tr:nth-child(even) { background-color: #f8f9fa; }
 .footer { text-align: center; margin-top: 40px; font-size: 10px; color: #666; }
 </style></head><body>
 <div class="header">
-<h1>Sistema de Gestión de Condominio</h1>
+' . $this->getCompanyLogoHtml() . '
+<h1>Sistema de Gestión de Condominio</h1>' . $this->getCompanyMetaLineHtml() . '
 <h2>Reporte de Residentes</h2>
 <p>Fecha de generación: ' . date('d/m/Y H:i:s') . '</p>';
         
@@ -285,8 +331,9 @@ td { padding: 8px 0; }
 .label { font-weight: bold; width: 40%; }
 </style></head><body>
 <div class="header">
+' . $this->getCompanyLogoHtml() . '
 <h1>COMPROBANTE DE PAGO</h1>
-<p>Sistema de Gestión de Condominio</p>
+<p>Sistema de Gestión de Condominio</p>' . $this->getCompanyMetaLineHtml() . '
 </div>
 <div class="receipt-number">
 <p><strong>No. Comprobante:</strong> ' . str_pad($payment['id'], 8, '0', STR_PAD_LEFT) . '</p>
@@ -346,8 +393,9 @@ td { padding: 8px 0; }
 .description-box { background-color: #f8f9fa; padding: 15px; border-left: 4px solid #ffc107; margin: 20px 0; }
 </style></head><body>
 <div class="header">
+' . $this->getCompanyLogoHtml() . '
 <h1>REPORTE DE INCIDENCIA</h1>
-<p>Sistema de Gestión de Condominio</p>
+<p>Sistema de Gestión de Condominio</p>' . $this->getCompanyMetaLineHtml() . '
 </div>
 <div class="receipt-number">
 <p><strong>No. Incidencia:</strong> ' . str_pad($incident['id'], 6, '0', STR_PAD_LEFT) . '</p>
