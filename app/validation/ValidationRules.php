@@ -100,7 +100,7 @@ class ValidationRules {
                 'concepto' => ['required' => true, 'max' => 100],
                 'mes_pago' => ['required' => true],
                 'fecha_pago' => ['required' => true],
-                'metodo_pago' => ['required' => true, 'in' => getCatalogKeys(PAYMENT_METHODS)],
+                'metodo_pago' => ['required' => true, 'max' => 50],
                 'referencia' => ['max' => 100],
                 'estado' => ['required' => true, 'in' => getCatalogKeys(PAYMENT_STATUSES)]
             ],
@@ -110,7 +110,7 @@ class ValidationRules {
                 'concepto' => ['required' => true, 'max' => 100],
                 'mes_pago' => ['required' => true],
                 'fecha_pago' => ['required' => true],
-                'metodo_pago' => ['required' => true, 'in' => getCatalogKeys(PAYMENT_METHODS)],
+                'metodo_pago' => ['required' => true, 'max' => 50],
                 'referencia' => ['max' => 100],
                 'estado' => ['required' => true, 'in' => getCatalogKeys(PAYMENT_STATUSES)]
             ],

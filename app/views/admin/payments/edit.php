@@ -119,18 +119,13 @@
                                 <label for="metodo_pago" class="form-label">Método de Pago *</label>
                                 <select class="form-select" id="metodo_pago" name="metodo_pago" required>
                                     <option value="">Seleccionar método</option>
-                                    <option value="efectivo" <?= isset($payment['metodo_pago']) && $payment['metodo_pago'] == 'efectivo' ? 'selected' : '' ?>>
-                                        💵 Efectivo
-                                    </option>
-                                    <option value="transferencia" <?= isset($payment['metodo_pago']) && $payment['metodo_pago'] == 'transferencia' ? 'selected' : '' ?>>
-                                        🏦 Transferencia Bancaria
-                                    </option>
-                                    <option value="tarjeta" <?= isset($payment['metodo_pago']) && $payment['metodo_pago'] == 'tarjeta' ? 'selected' : '' ?>>
-                                        💳 Tarjeta de Crédito/Débito
-                                    </option>
-                                    <option value="deposito" <?= isset($payment['metodo_pago']) && $payment['metodo_pago'] == 'deposito' ? 'selected' : '' ?>>
-                                        🏧 Depósito Bancario
-                                    </option>
+                                    <?php if (!empty($medios_pago)): ?>
+                                        <?php foreach ($medios_pago as $mp): ?>
+                                            <option value="<?= htmlspecialchars($mp['valor']) ?>" <?= isset($payment['metodo_pago']) && $payment['metodo_pago'] == $mp['valor'] ? 'selected' : '' ?>>
+                                                <?= htmlspecialchars($mp['nombre']) ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
                                 </select>
                                 <div class="invalid-feedback">
                                     Debe seleccionar un método de pago

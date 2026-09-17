@@ -44,3 +44,6 @@ hclj
 dash.html
 dash
 dash/
+
+# Archivos subidos por los usuarios (logos, etc.) — no se versionan
+/public/uploads/

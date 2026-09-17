@@ -10,6 +10,7 @@ class PaymentController extends Controller {
     private $bankAccount;
     private $paymentDeclaration;
     private $paymentNotificationService;
+    private $medioPago;
     
     public function __construct() {
         parent::__construct();
@@ -19,6 +20,7 @@ class PaymentController extends Controller {
         $this->bankAccount = new BankAccount($this->db);
         $this->paymentDeclaration = new PaymentDeclaration($this->db);
         $this->paymentNotificationService = new PaymentNotificationService($this->db);
+        $this->medioPago = new MedioPago($this->db);
         
         // Cargar modelos y servicios de mora si existen
         if (file_exists(APP_PATH . '/models/LateFeeRule.php')) {
@@ -85,7 +87,8 @@ class PaymentController extends Controller {
             $residents = $this->resident->getActiveResidents()->fetchAll(PDO::FETCH_ASSOC);
             
             $this->view('admin/payments/create', [
-                'residents' => $residents
+                'residents' => $residents,
+                'medios_pago' => $this->getMediosPago()
             ]);
         }
     }
@@ -100,7 +103,8 @@ class PaymentController extends Controller {
             $this->view('admin/payments/create', [
                 'errors' => $errors,
                 'data' => $data,
-                'residents' => $residents
+                'residents' => $residents,
+                'medios_pago' => $this->getMediosPago()
             ]);
             return;
         }
@@ -114,7 +118,8 @@ class PaymentController extends Controller {
             $this->view('admin/payments/create', [
                 'error' => 'Ya existe un pago para este residente en el mes especificado',
                 'data' => $data,
-                'residents' => $residents
+                'residents' => $residents,
+                'medios_pago' => $this->getMediosPago()
             ]);
             return;
         }
@@ -148,7 +153,8 @@ class PaymentController extends Controller {
             $this->view('admin/payments/create', [
                 'error' => 'Error al registrar el pago',
                 'data' => $data,
-                'residents' => $residents
+                'residents' => $residents,
+                'medios_pago' => $this->getMediosPago()
             ]);
         }
     }
@@ -207,17 +213,21 @@ class PaymentController extends Controller {
             }
         }
         
+        $empresa_data = (new Empresa($this->db))->getData();
+        
         if(isset($_GET['embed'])) {
             $this->view('payments/receipt_embed', [
                 'payment' => $payment_data,
-                'is_admin' => isAdmin()
+                'is_admin' => isAdmin(),
+                'empresa' => $empresa_data
             ]);
             return;
         }
         
         $this->view('payments/receipt', [
             'payment' => $payment_data,
-            'is_admin' => isAdmin()
+            'is_admin' => isAdmin(),
+            'empresa' => $empresa_data
         ]);
     }
     
@@ -249,7 +259,8 @@ class PaymentController extends Controller {
             $this->view('admin/payments/edit', [
                 'payment' => $payment_data,
                 'residents' => $residents,
-                'late_fee_history' => $late_fee_history
+                'late_fee_history' => $late_fee_history,
+                'medios_pago' => $this->getMediosPago()
             ]);
         }
     }
@@ -264,7 +275,8 @@ class PaymentController extends Controller {
             $this->view('admin/payments/edit', [
                 'errors' => $errors,
                 'payment' => $data,
-                'residents' => $residents
+                'residents' => $residents,
+                'medios_pago' => $this->getMediosPago()
             ]);
             return;
         }
@@ -278,7 +290,8 @@ class PaymentController extends Controller {
             $this->view('admin/payments/edit', [
                 'error' => 'Ya existe un pago para este residente en el mes especificado',
                 'payment' => $data,
-                'residents' => $residents
+                'residents' => $residents,
+                'medios_pago' => $this->getMediosPago()
             ]);
             return;
         }
@@ -294,7 +307,7 @@ class PaymentController extends Controller {
         $this->payment->referencia = $data['referencia'];
         $this->payment->estado = $data['estado'];
         
-        if($this->payment->update()) {
+if($this->payment->update()) {
             flash('Pago actualizado correctamente', 'success');
             redirect('/payments');
         } else {
@@ -302,9 +315,19 @@ class PaymentController extends Controller {
             $this->view('admin/payments/edit', [
                 'error' => 'Error al actualizar el pago',
                 'payment' => $data,
-                'residents' => $residents
+                'residents' => $residents,
+                'medios_pago' => $this->getMediosPago()
             ]);
         }
+    }
+
+    /**
+     * Medios de pago activos para el select del formulario.
+     *
+     * @return array Lista de medios activos [['id','valor','nombre'], ...]
+     */
+private function getMediosPago() {
+        return $this->medioPago->getActive()->fetchAll(PDO::FETCH_ASSOC);
     }
     
     // Eliminar pago (solo admin)

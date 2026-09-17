@@ -52,6 +52,7 @@ require_once APP_PATH . '/models/BankAccount.php';
 require_once APP_PATH . '/models/PaymentDeclaration.php';
 require_once APP_PATH . '/models/AppSetting.php';
 require_once APP_PATH . '/models/Empresa.php';
+require_once APP_PATH . '/models/MedioPago.php';
 
 // Cargar modelos de mora si existen
 if (file_exists(APP_PATH . '/models/LateFeeRule.php')) {
@@ -95,6 +96,7 @@ require_once APP_PATH . '/controllers/NotificationController.php';
 require_once APP_PATH . '/controllers/PdfController.php';
 require_once APP_PATH . '/controllers/ExcelController.php';
 require_once APP_PATH . '/controllers/CompanyController.php';
+require_once APP_PATH . '/controllers/MedioPagoController.php';
 
 // Cargar controlador de mora si existe
 if (file_exists(APP_PATH . '/controllers/LateFeeController.php')) {
@@ -598,6 +600,27 @@ switch ($request_path) {
         $controller->bankAccountDelete($matches[1]);
         break;
         
+    // Medios de Pago (Admin only)
+    case '/medios-pago':
+        $controller = new MedioPagoController();
+        $controller->index();
+        break;
+
+    case '/medios-pago/create':
+        $controller = new MedioPagoController();
+        $controller->create();
+        break;
+
+    case (preg_match('/^\/medios-pago\/edit\/(\d+)$/', $request_path, $matches) ? true : false):
+        $controller = new MedioPagoController();
+        $controller->edit($matches[1]);
+        break;
+
+    case (preg_match('/^\/medios-pago\/delete\/(\d+)$/', $request_path, $matches) ? true : false):
+        $controller = new MedioPagoController();
+        $controller->delete($matches[1]);
+        break;
+
     // Configuración General (Admin only)
     case '/settings':
         $controller = new SettingsController();

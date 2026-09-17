@@ -177,6 +177,11 @@
                                 <i class="fas fa-dollar-sign"></i> Tasa de cambio
                             </a>
                         </li>
+                        <li>
+                            <a href="<?= APP_URL ?>/medios-pago">
+                                <i class="fas fa-money-bill-wave"></i> Medios de Pago
+                            </a>
+                        </li>
                     </ul>
                 </li>
                 <?php endif; ?>

@@ -40,6 +40,16 @@ $residente_email = $payment['email'] ?? $payment['residente_email'] ?? 'N/A';
     border-radius: 50%;
 }
 
+.receipt-logo {
+    margin-left: auto;
+    text-align: right;
+}
+
+.receipt-logo img {
+    max-width: 110px;
+    max-height: 60px;
+}
+
 .receipt-title {
     text-align: center;
     font-size: 1.5rem;
@@ -182,6 +192,11 @@ $residente_email = $payment['email'] ?? $payment['residente_email'] ?? 'N/A';
             <h2 class="mb-0"><?= APP_NAME ?></h2>
             <p class="text-muted mb-0">Sistema de Gestión de Condominio</p>
         </div>
+        <?php if (!empty($empresa['logo'] ?? '')): ?>
+            <div class="receipt-logo">
+                <img src="<?= htmlspecialchars(APP_URL . '/' . $empresa['logo']) ?>" alt="Logo del condominio">
+            </div>
+        <?php endif; ?>
     </div>
 
     <div class="receipt-title">
