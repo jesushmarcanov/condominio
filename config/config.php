@@ -4,7 +4,15 @@
 // Configuración de la aplicación
 define('APP_NAME', 'CondoWeb');
 define('APP_VERSION', '1.0.0');
-define('APP_URL', 'http://localhost/condominio');
+
+// URL base de la aplicación, derivada dinámicamente del host y la ruta actuales.
+// Así funciona tanto con "localhost" como accediendo por IP desde otros
+// dispositivos de la red (ej. http://172.16.20.103/condominio).
+$app_scheme = ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https')) ? 'https' : 'http';
+$app_host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+$app_base_path = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/')), '/');
+define('APP_URL', $app_scheme . '://' . $app_host . $app_base_path);
+unset($app_scheme, $app_host, $app_base_path);
 
 // Configuración de sesión
 define('SESSION_LIFETIME', 3600); // 1 hora

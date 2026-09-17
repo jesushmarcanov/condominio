@@ -47,7 +47,7 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h4><?= formatCurrencyDual($stats['pagos']['total_ingresos']) ?></h4>
+                        <h4 class="d-flex align-items-baseline gap-2 flex-wrap"><?= formatCurrencyDual($stats['pagos']['total_ingresos']) ?></h4>
                         <p class="mb-0">Total Ingresos</p>
                     </div>
                     <div class="align-self-center">

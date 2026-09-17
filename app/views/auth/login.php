@@ -87,6 +87,10 @@
                                 <span class="input-group-text"><i class="fas fa-lock"></i></span>
                                 <input type="password" class="form-control" id="password" name="password" 
                                        placeholder="••••••••" required>
+                                <button type="button" class="btn btn-outline-secondary" id="togglePassword"
+                                        title="Mostrar / ocultar contraseña">
+                                    <i class="fas fa-eye" id="passwordEyeIcon"></i>
+                                </button>
                             </div>
                         </div>
 
@@ -116,3 +120,20 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const toggleBtn = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('password');
+    const eyeIcon = document.getElementById('passwordEyeIcon');
+
+    if (toggleBtn && passwordInput && eyeIcon) {
+        toggleBtn.addEventListener('click', function() {
+            const isPassword = passwordInput.type === 'password';
+            passwordInput.type = isPassword ? 'text' : 'password';
+            eyeIcon.classList.toggle('fa-eye', isPassword);
+            eyeIcon.classList.toggle('fa-eye-slash', !isPassword);
+        });
+    }
+});
+</script>
